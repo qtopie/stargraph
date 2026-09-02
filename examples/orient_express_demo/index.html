@@ -124,19 +124,19 @@
     <div class="paper-card w-full h-full max-w-6xl max-h-[94vh] rounded-2xl p-4 md:p-8 shadow-2xl border-2 border-[#8C2D19]/60 flex flex-col relative overflow-hidden bg-[#FAF7F2]">
       
       <!-- Top Decorative Dossier Header -->
-      <div class="flex items-center justify-between border-b-2 border-[#8C2D19]/30 pb-3 mb-3 shrink-0">
-        <div class="flex items-center space-x-3 text-[#8C2D19]">
-          <div class="w-8 h-8 rounded-lg bg-[#8C2D19] text-[#FAF7F2] flex items-center justify-center font-bold">
-            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+      <div class="flex flex-wrap items-center justify-between border-b-2 border-[#8C2D19]/30 pb-2 md:pb-3 mb-2 md:mb-3 shrink-0 gap-1.5">
+        <div class="flex items-center space-x-2 md:space-x-3 text-[#8C2D19]">
+          <div class="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-[#8C2D19] text-[#FAF7F2] flex items-center justify-center font-bold">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5 md:w-5 md:h-5"></i>
           </div>
           <div>
-            <span class="font-cinzel font-black text-sm md:text-lg tracking-wider text-[#2C221E] block">SIMPLON ORIENT EXPRESS · CONFIDENTIAL DOSSIER</span>
-            <span class="text-[10px] md:text-xs text-[#786B62] font-mono">案件编号：1934-OE-0012 · 调查官专属绝密案卷</span>
+            <span class="font-cinzel font-black text-xs md:text-lg tracking-wider text-[#2C221E] block">SIMPLON ORIENT EXPRESS</span>
+            <span class="text-[9px] md:text-xs text-[#786B62] font-mono">1934-OE-0012 · 绝密案卷</span>
           </div>
         </div>
-        <div class="flex items-center space-x-3 text-xs text-[#786B62]">
-          <span id="story-step-indicator" class="font-mono font-bold px-2.5 py-1 rounded bg-[#8C2D19]/10 text-[#8C2D19] border border-[#8C2D19]/20 text-xs">Card 1 / 5</span>
-          <button onclick="skipStoryIntro()" class="text-xs font-bold text-[#8C2D19] hover:underline px-2.5 py-1 rounded border border-[#8C2D19]/30 bg-[#FFFFFF] hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition">跳过 · 直接进入分析面板 ➔</button>
+        <div class="flex items-center space-x-2 text-xs text-[#786B62]">
+          <span id="story-step-indicator" class="font-mono font-bold px-2 py-0.5 rounded bg-[#8C2D19]/10 text-[#8C2D19] border border-[#8C2D19]/20 text-[10px] md:text-xs">Card 1 / 5</span>
+          <button onclick="skipStoryIntro()" class="text-[10px] md:text-xs font-bold text-[#8C2D19] hover:underline px-2 py-0.5 rounded border border-[#8C2D19]/30 bg-[#FFFFFF] hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition">跳过 ➔</button>
         </div>
       </div>
 
@@ -611,13 +611,13 @@
   <!-- ========================================================================= -->
   <!-- VIEW 2: DEVELOPER / ARCHITECTURE CONSOLE (开发者技术控制台视角)               -->
   <!-- ========================================================================= -->
-  <div id="view-dev" class="hidden flex-1 flex overflow-hidden">
+  <div id="view-dev" class="hidden flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden min-h-0">
     
-    <!-- Left Sidebar: Coach Plan & Chunks (Width: 320px) -->
-    <aside class="w-80 bg-[#FAF7F2] border-r border-[#D8CCBC] flex flex-col shrink-0 overflow-hidden">
+    <!-- Left Sidebar: Coach Plan & Chunks (Width: 320px on desktop, full width on mobile) -->
+    <aside class="w-full md:w-80 bg-[#FAF7F2] border-b md:border-b-0 md:border-r border-[#D8CCBC] flex flex-col shrink-0 overflow-y-auto md:overflow-hidden max-h-72 md:max-h-none">
       
       <!-- Coach Map -->
-      <div class="p-3 border-b border-[#D8CCBC] bg-[#F4EFE6]">
+      <div class="p-3 border-b border-[#D8CCBC] bg-[#F4EFE6] shrink-0">
         <div class="flex items-center justify-between mb-1">
           <span class="text-xs font-bold text-[#8C2D19]">加莱车厢拓扑映射</span>
           <span class="text-[10px] text-[#786B62]">点击高亮图谱</span>
@@ -643,8 +643,8 @@
       </div>
 
       <!-- Corpus Chunks -->
-      <div class="flex-1 flex flex-col overflow-hidden">
-        <div class="p-2.5 bg-[#F4EFE6] border-b border-[#D8CCBC] text-xs font-bold text-[#2C221E] flex items-center justify-between">
+      <div class="flex-1 flex flex-col overflow-hidden min-h-32">
+        <div class="p-2.5 bg-[#F4EFE6] border-b border-[#D8CCBC] text-xs font-bold text-[#2C221E] flex items-center justify-between shrink-0">
           <span>原著三部曲分块 (Corpus)</span>
           <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#FAF7F2] text-[#786B62]">6 Chunks</span>
         </div>
@@ -665,76 +665,76 @@
     </aside>
 
     <!-- Center & Right: Knowledge Graph Canvas & Arena -->
-    <main class="flex-1 flex flex-col bg-[#F4EFE6] overflow-hidden min-w-0 min-h-0">
+    <main class="flex-1 flex flex-col bg-[#F4EFE6] overflow-hidden min-w-0 min-h-[420px] md:min-h-0">
       
       <!-- Top Control Bar -->
-      <div class="flex items-center space-x-2 px-3 py-1.5 bg-[#EFE8DC] border-b border-[#D8CCBC] shrink-0">
+      <div class="flex flex-wrap items-center space-x-1 md:space-x-2 px-3 py-1.5 bg-[#EFE8DC] border-b border-[#D8CCBC] shrink-0 gap-1">
         <div class="bg-[#FAF7F2] border border-[#D8CCBC] rounded-lg px-1 flex items-center space-x-0.5 text-xs">
-          <span class="text-[#786B62] px-1.5 font-bold font-cinzel text-[10px]">STAGE:</span>
-          <button onclick="setRevealStage(0)" id="dev-stage-btn-0" class="px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">0 现场</button>
-          <button onclick="setRevealStage(1)" id="dev-stage-btn-1" class="px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">1 口供</button>
-          <button onclick="setRevealStage(2)" id="dev-stage-btn-2" class="px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">2 显影</button>
-          <button onclick="setRevealStage(3)" id="dev-stage-btn-3" class="px-2 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold">3 终局</button>
+          <span class="text-[#786B62] px-1 font-bold font-cinzel text-[10px]">STAGE:</span>
+          <button onclick="setRevealStage(0)" id="dev-stage-btn-0" class="px-1.5 md:px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E] text-[10px] md:text-xs">0 现场</button>
+          <button onclick="setRevealStage(1)" id="dev-stage-btn-1" class="px-1.5 md:px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E] text-[10px] md:text-xs">1 口供</button>
+          <button onclick="setRevealStage(2)" id="dev-stage-btn-2" class="px-1.5 md:px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E] text-[10px] md:text-xs">2 显影</button>
+          <button onclick="setRevealStage(3)" id="dev-stage-btn-3" class="px-1.5 md:px-2 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold text-[10px] md:text-xs">3 终局</button>
         </div>
         <div class="bg-[#FAF7F2] border border-[#D8CCBC] rounded-lg px-1 flex items-center space-x-0.5 text-xs">
-          <button id="btn-mode-surface" onclick="switchViewMode('surface')" class="px-2.5 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">表面视角</button>
-          <button id="btn-mode-truth" onclick="switchViewMode('truth')" class="px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold">真相图谱</button>
-          <button id="btn-mode-drift" onclick="switchViewMode('drift')" class="px-2.5 py-0.5 rounded text-[#B45309] hover:text-[#92400E]">DRIFT 穿梭</button>
+          <button id="btn-mode-surface" onclick="switchViewMode('surface')" class="px-1.5 md:px-2.5 py-0.5 rounded text-[#786B62] hover:text-[#2C221E] text-[10px] md:text-xs">表面视角</button>
+          <button id="btn-mode-truth" onclick="switchViewMode('truth')" class="px-1.5 md:px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold text-[10px] md:text-xs">真相图谱</button>
+          <button id="btn-mode-drift" onclick="switchViewMode('drift')" class="px-1.5 md:px-2.5 py-0.5 rounded text-[#B45309] hover:text-[#92400E] text-[10px] md:text-xs">DRIFT 穿梭</button>
         </div>
-        <button onclick="resetDevFocus()" class="px-2.5 py-1 rounded bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/40 font-bold hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition text-xs">
+        <button onclick="resetDevFocus()" class="px-2 md:px-2.5 py-1 rounded bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/40 font-bold hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition text-[10px] md:text-xs">
           👁️ 显示全图
         </button>
         <!-- DRIFT inline controls (shown when drift active) -->
-        <div id="drift-stepper" class="hidden flex items-center space-x-2 text-xs bg-[#FFF8EE] border border-[#8C2D19]/30 rounded-lg px-2 py-1">
-          <span id="drift-step-badge" class="px-1.5 py-0.5 bg-[#8C2D19]/10 text-[#8C2D19] rounded text-[10px] font-mono">Step 1/4</span>
-          <p id="drift-step-text" class="text-[#4A3E38] text-[11px] max-w-xs"></p>
-          <button onclick="prevDriftStep()" class="px-2 py-0.5 bg-[#EAE3D6] rounded text-[#2C221E]">◀</button>
-          <button onclick="nextDriftStep()" class="px-2 py-0.5 bg-[#8C2D19] rounded text-[#FAF7F2] font-bold">▶</button>
-          <button onclick="autoPlayDrift()" id="btn-drift-auto" class="px-2 py-0.5 bg-[#FAF7F2] border border-[#D8CCBC] rounded text-[#8C2D19]">▶ 自动</button>
+        <div id="drift-stepper" class="hidden flex items-center space-x-1.5 text-xs bg-[#FFF8EE] border border-[#8C2D19]/30 rounded-lg px-2 py-1">
+          <span id="drift-step-badge" class="px-1 py-0.2 bg-[#8C2D19]/10 text-[#8C2D19] rounded text-[9px] font-mono">Step 1/4</span>
+          <p id="drift-step-text" class="text-[#4A3E38] text-[10px] max-w-xs truncate"></p>
+          <button onclick="prevDriftStep()" class="px-1.5 py-0.5 bg-[#EAE3D6] rounded text-[#2C221E] text-[10px]">◀</button>
+          <button onclick="nextDriftStep()" class="px-1.5 py-0.5 bg-[#8C2D19] rounded text-[#FAF7F2] font-bold text-[10px]">▶</button>
+          <button onclick="autoPlayDrift()" id="btn-drift-auto" class="px-1.5 py-0.5 bg-[#FAF7F2] border border-[#D8CCBC] rounded text-[#8C2D19] text-[10px]">▶ 自动</button>
         </div>
       </div>
 
       <!-- Network Canvas Wrapper -->
-      <div class="network-wrap">
+      <div class="network-wrap flex-1 min-h-[220px]">
         <div id="dev-network-container"></div>
       </div>
 
       <!-- Bottom Arena: Side-by-Side RAG Comparison Console -->
-      <section class="h-60 bg-[#FAF7F2] border-t border-[#D8CCBC] flex flex-col shrink-0 z-20">
-        <div class="px-4 py-1.5 bg-[#F4EFE6] border-b border-[#D8CCBC] flex items-center justify-between space-x-3">
-          <div class="flex items-center space-x-2 text-xs">
-            <span class="text-[#786B62] font-bold">典型关卡:</span>
-            <button onclick="loadBenchmarkCase(0)" id="tab-bench-0" class="px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold text-xs truncate max-w-xs">⚡ 关卡 1: 玛丽动机</button>
-            <button onclick="loadBenchmarkCase(1)" id="tab-bench-1" class="px-2.5 py-0.5 rounded bg-[#FAF7F2] text-[#786B62] border border-[#D8CCBC] text-xs truncate max-w-xs">🔄 关卡 2: 闭环伪证</button>
-            <button onclick="loadBenchmarkCase(2)" id="tab-bench-2" class="px-2.5 py-0.5 rounded bg-[#FAF7F2] text-[#786B62] border border-[#D8CCBC] text-xs truncate max-w-xs">🌐 关卡 3: 全员共谋</button>
+      <section class="h-64 md:h-60 bg-[#FAF7F2] border-t border-[#D8CCBC] flex flex-col shrink-0 z-20">
+        <div class="px-3 md:px-4 py-1.5 bg-[#F4EFE6] border-b border-[#D8CCBC] flex flex-wrap items-center justify-between gap-1.5">
+          <div class="flex flex-wrap items-center gap-1 text-xs">
+            <span class="text-[#786B62] font-bold text-[10px] md:text-xs">典型关卡:</span>
+            <button onclick="loadBenchmarkCase(0)" id="tab-bench-0" class="px-2 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold text-[10px] md:text-xs truncate max-w-xs">⚡ 关卡 1</button>
+            <button onclick="loadBenchmarkCase(1)" id="tab-bench-1" class="px-2 py-0.5 rounded bg-[#FAF7F2] text-[#786B62] border border-[#D8CCBC] text-[10px] md:text-xs truncate max-w-xs">🔄 关卡 2</button>
+            <button onclick="loadBenchmarkCase(2)" id="tab-bench-2" class="px-2 py-0.5 rounded bg-[#FAF7F2] text-[#786B62] border border-[#D8CCBC] text-[10px] md:text-xs truncate max-w-xs">🌐 关卡 3</button>
           </div>
-          <div class="flex-1 flex items-center space-x-2 max-w-md">
-            <input id="input-custom-query" type="text" class="w-full bg-[#FFFFFF] border border-[#D8CCBC] rounded px-2.5 py-1 text-xs text-[#2C221E] focus:outline-none" value="玛丽·德本汉在案发当晚是否有作案嫌疑？她与死者雷切特有什么深层动机？">
-            <button onclick="runCurrentQuery()" class="px-3 py-1 bg-[#8C2D19] text-[#FAF7F2] font-bold rounded text-xs shrink-0">执行推理</button>
+          <div class="flex-1 flex items-center space-x-1.5 max-w-md min-w-[200px]">
+            <input id="input-custom-query" type="text" class="w-full bg-[#FFFFFF] border border-[#D8CCBC] rounded px-2 py-1 text-[11px] md:text-xs text-[#2C221E] focus:outline-none" value="玛丽·德本汉在案发当晚是否有作案嫌疑？她与死者雷切特有什么深层动机？">
+            <button onclick="runCurrentQuery()" class="px-2.5 py-1 bg-[#8C2D19] text-[#FAF7F2] font-bold rounded text-[11px] md:text-xs shrink-0">推理</button>
           </div>
         </div>
 
-        <div class="flex-1 grid grid-cols-2 divide-x divide-[#D8CCBC] overflow-hidden text-xs">
-          <div class="p-3 flex flex-col overflow-hidden bg-[#FFF8F8]">
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#D8CCBC] overflow-y-auto text-xs">
+          <div class="p-2.5 md:p-3 flex flex-col bg-[#FFF8F8] min-h-[100px]">
             <div class="flex items-center justify-between mb-1">
-              <h3 class="font-bold text-[#9B2C2C]">❌ 传统向量 RAG (Baseline Vector RAG)</h3>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#FED7D7] text-[#9B2C2C]">孤立局部召回</span>
+              <h3 class="font-bold text-[#9B2C2C] text-[11px] md:text-xs">❌ 传统向量 RAG (Baseline)</h3>
+              <span class="text-[9px] md:text-[10px] px-1 py-0.2 rounded bg-[#FED7D7] text-[#9B2C2C]">孤立局部召回</span>
             </div>
-            <div class="flex-1 overflow-y-auto pr-1 space-y-1">
+            <div class="space-y-1">
               <div class="p-1.5 rounded bg-[#FFFFFF] border border-[#FED7D7] text-[#4A3E38] text-[11px]" id="vector-rag-answer"></div>
               <div class="p-1 rounded bg-[#FFF5F5] border border-[#FED7D7] text-[#9B2C2C] text-[10px]" id="vector-rag-flaw"></div>
             </div>
           </div>
 
-          <div class="p-3 flex flex-col overflow-hidden bg-[#F0FDF4]">
+          <div class="p-2.5 md:p-3 flex flex-col bg-[#F0FDF4] min-h-[100px]">
             <div class="flex items-center justify-between mb-1">
-              <h3 class="font-bold text-[#166534]">✅ StarGraph Engine (GraphRAG / DRIFT)</h3>
-              <div class="flex items-center space-x-1.5 text-[10px]">
-                <span id="stargraph-mode-badge" class="px-1.5 py-0.5 rounded bg-[#DCFCE7] text-[#166534] font-mono">Mode: DRIFT</span>
-                <span id="stargraph-token-saving" class="px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#92400E]">Token 节省 88%</span>
+              <h3 class="font-bold text-[#166534] text-[11px] md:text-xs">✅ StarGraph Engine (GraphRAG / DRIFT)</h3>
+              <div class="flex items-center space-x-1 text-[9px] md:text-[10px]">
+                <span id="stargraph-mode-badge" class="px-1 py-0.2 rounded bg-[#DCFCE7] text-[#166534] font-mono">DRIFT</span>
+                <span id="stargraph-token-saving" class="px-1 py-0.2 rounded bg-[#FEF3C7] text-[#92400E]">省 88%</span>
               </div>
             </div>
-            <div class="flex-1 overflow-y-auto pr-1 space-y-1">
+            <div class="space-y-1">
               <div class="p-1.5 rounded bg-[#FFFFFF] border border-[#BBF7D0] text-[#1F2937] text-[11px] whitespace-pre-line" id="stargraph-rag-answer"></div>
               <div class="p-1 rounded bg-[#DCFCE7] text-[#166534] text-[10px] font-mono flex items-center space-x-1 overflow-x-auto" id="stargraph-path-trace"></div>
             </div>
