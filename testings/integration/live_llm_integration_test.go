@@ -29,8 +29,28 @@ func TestLiveLLM_RealWorldGraphRAG(t *testing.T) {
 		}
 	}
 
+	// 兼容 COPILOT_PROVIDER_* 系列环境变量
+	if apiKey == "" {
+		apiKey = os.Getenv("COPILOT_PROVIDER_API_KEY")
+		if apiKey != "" {
+			if baseURL == "" {
+				baseURL = os.Getenv("COPILOT_PROVIDER_BASE_URL")
+			}
+			if chatModel == "" {
+				chatModel = os.Getenv("COPILOT_MODEL")
+			}
+		}
+	}
+
+	// 智能兼容清理 baseURL
+	baseURL = strings.TrimSuffix(baseURL, "/anthropic")
+	baseURL = strings.TrimSuffix(baseURL, "/v1")
+	if strings.Contains(baseURL, "deepseek") && chatModel == "deepseek-v4-flash" {
+		chatModel = "deepseek-chat"
+	}
+
 	if apiKey == "" && baseURL == "" {
-		t.Skip("跳过真实 LLM 集成测试：未设置 OPENAI_API_KEY 或 DEEPSEEK_API_KEY")
+		t.Skip("跳过真实 LLM 集成测试：未设置 OPENAI_API_KEY, DEEPSEEK_API_KEY 或 COPILOT_PROVIDER_API_KEY")
 	}
 
 	if chatModel == "" {
@@ -44,9 +64,16 @@ func TestLiveLLM_RealWorldGraphRAG(t *testing.T) {
 	defer cancel()
 
 	llmClient := llm.NewOpenAIClient(baseURL, apiKey, chatModel)
-	embedClient := llm.NewOpenAIClient(baseURL, apiKey, embedModel)
 
-	engine := stargraph.NewEngine(llmClient, embedClient, stargraph.DefaultConfig())
+	cfg := stargraph.DefaultConfig()
+	// 若使用的是 DeepSeek 或未指定独立 Embedding 模型，启用 AGRAG 0-Token 抽取 + Lazy 模式
+	if strings.Contains(baseURL, "deepseek") || embedModel == "" {
+		cfg.IndexMode = stargraph.IndexModeLazy
+		cfg.ExtractorType = stargraph.ExtractorTypeCooccurrence
+		cfg.CooccurrenceConfig.MinCooccurFreq = 1
+	}
+
+	engine := stargraph.NewEngine(llmClient, nil, cfg)
 	defer func() { _ = engine.Close() }()
 
 	doc1 := &document.Document{
@@ -70,9 +97,14 @@ func TestLiveLLM_RealWorldGraphRAG(t *testing.T) {
 	query := "How is Alice connected to Bob?"
 	t.Logf("Running real LLM Local Search for query: %s", query)
 
+	queryMode := search.ModeLocal
+	if cfg.IndexMode == stargraph.IndexModeLazy {
+		queryMode = search.ModeDRIFT
+	}
+
 	res, err := engine.Query(ctx, &search.Request{
 		Query:   query,
-		Mode:    search.ModeLocal,
+		Mode:    queryMode,
 		TopK:    3,
 		MaxHops: 2,
 	})

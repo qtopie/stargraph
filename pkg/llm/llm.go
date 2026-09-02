@@ -66,12 +66,19 @@ func NewOpenAIClient(baseURL, apiKey, model string) *OpenAIClient {
 	if baseURL == "" {
 		baseURL = "https://api.openai.com/v1"
 	}
+	tr := &http.Transport{
+		ForceAttemptHTTP2:   false,
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 20,
+		IdleConnTimeout:     90 * time.Second,
+	}
 	return &OpenAIClient{
 		BaseURL: baseURL,
 		APIKey:  apiKey,
 		Model:   model,
 		HTTPClient: &http.Client{
-			Timeout: 120 * time.Second,
+			Transport: tr,
+			Timeout:   120 * time.Second,
 		},
 	}
 }
@@ -145,6 +152,8 @@ func (c *OpenAIClient) CompleteWithSystem(ctx context.Context, systemPrompt, use
 		return "", fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "StarGraph-Client/1.0")
 	if c.APIKey != "" {
 		req.Header.Set("Authorization", "Bearer "+c.APIKey)
 	}
@@ -230,6 +239,8 @@ func (c *OpenAIClient) EmbedBatch(ctx context.Context, texts []string) ([][]floa
 		return nil, fmt.Errorf("create embedding request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "StarGraph-Client/1.0")
 	if c.APIKey != "" {
 		req.Header.Set("Authorization", "Bearer "+c.APIKey)
 	}
