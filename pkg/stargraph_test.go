@@ -120,4 +120,59 @@ func TestStarGraph_EndToEnd(t *testing.T) {
 	if autoRes.Answer == "" {
 		t.Errorf("expected non-empty auto search answer")
 	}
+
+	// 5. 测试 DRIFT Search 动态穿梭查询
+	driftReq := &search.Request{
+		Query:   "Trace how StarGraph connects to CosmosStar",
+		Mode:    search.ModeDRIFT,
+		MaxHops: 2,
+	}
+	driftRes, err := engine.Query(ctx, driftReq)
+	if err != nil {
+		t.Fatalf("DRIFT Query failed: %v", err)
+	}
+	if driftRes.Answer == "" {
+		t.Errorf("expected non-empty drift search answer")
+	}
+}
+
+func TestStarGraph_LazyAndAGRAG(t *testing.T) {
+	ctx := context.Background()
+	mockLLM := &MockLLMClient{}
+	mockEmbed := &MockEmbedClient{}
+
+	cfg := stargraph.DefaultConfig()
+	cfg.IndexMode = stargraph.IndexModeLazy
+	cfg.ExtractorType = stargraph.ExtractorTypeCooccurrence
+	cfg.CooccurrenceConfig.MinCooccurFreq = 1
+
+	engine := stargraph.NewEngine(mockLLM, mockEmbed, cfg)
+	defer func() { _ = engine.Close() }()
+
+	doc := &document.Document{
+		ID: "doc-chip-01",
+		Content: "The chip MCU_STM32 communicates with SENSOR_BME280 over BUS_I2C. " +
+			"When CLK_PIN triggers, REG_I2C_CTRL executes transaction with SENSOR_BME280.",
+	}
+
+	// 1. 0-Token 纯 CPU 统计学建图 + Lazy 模式
+	if err := engine.Insert(ctx, doc); err != nil {
+		t.Fatalf("Lazy AGRAG Insert failed: %v", err)
+	}
+
+	// 2. 运行 DRIFT 检索排查
+	driftReq := &search.Request{
+		Query: "Diagnose SENSOR_BME280 transaction failure on BUS_I2C",
+		Mode:  search.ModeDRIFT,
+	}
+	driftRes, err := engine.Query(ctx, driftReq)
+	if err != nil {
+		t.Fatalf("DRIFT Query failed: %v", err)
+	}
+	if driftRes.Answer == "" {
+		t.Errorf("expected non-empty drift answer")
+	}
+	if len(driftRes.Nodes) == 0 {
+		t.Errorf("expected traversed nodes in AGRAG-built graph")
+	}
 }

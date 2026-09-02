@@ -29,6 +29,11 @@ func DefaultExtractorConfig() ExtractorConfig {
 	}
 }
 
+// ChunkExtractor 实体与关系抽取接口契约 (支持 LLM 语义抽取与 0-Token 统计学共现抽取)
+type ChunkExtractor interface {
+	ExtractChunks(ctx context.Context, chunks []*document.Chunk) error
+}
+
 // Extractor 负责并发调用 LLM 从文档分块中提取三元组并写入存储
 type Extractor struct {
 	llmClient   llm.Client

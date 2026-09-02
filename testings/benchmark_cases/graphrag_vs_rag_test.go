@@ -183,3 +183,93 @@ func TestGraphRAG_Solves_MultiHopReasoning_Failure_Of_Traditional_RAG(t *testing
 		t.Errorf("Expected at least 3 nodes in subgraph (Alice, Project Phoenix, Quantum DB, Bob), got: %d", len(graphRes.Nodes))
 	}
 }
+
+// CountingMockLLM 用于精准追踪 LLM 调用次数与 Token 消耗
+type CountingMockLLM struct {
+	CompleteCallCount int
+}
+
+func (m *CountingMockLLM) Complete(ctx context.Context, prompt string, opts ...llm.Option) (string, error) {
+	m.CompleteCallCount++
+	if strings.Contains(prompt, "DRIFT Engine") {
+		return "DRIFT verified: MCU_STM32 communicates with SENSOR_BME280 over BUS_I2C.", nil
+	}
+	if strings.Contains(prompt, "Community") {
+		return `{"title":"Community","summary":"Summary","rating":8.0}`, nil
+	}
+	if strings.Contains(prompt, "-Goal-") {
+		return fmt.Sprintf(`("entity"%s"MCU_STM32"%s"chip"%s"MCU.")%s("relationship"%s"MCU_STM32"%s"BUS_I2C"%s"Connects."%s5)%s`,
+			indexing.TupleDelimiter, indexing.TupleDelimiter, indexing.TupleDelimiter,
+			indexing.RecordDelimiter,
+			indexing.TupleDelimiter, indexing.TupleDelimiter, indexing.TupleDelimiter, indexing.TupleDelimiter,
+			indexing.CompletionDelimiter), nil
+	}
+	return "Standard answer", nil
+}
+
+func (m *CountingMockLLM) CompleteWithSystem(ctx context.Context, systemPrompt, userPrompt string, opts ...llm.Option) (string, error) {
+	m.CompleteCallCount++
+	return "System answer", nil
+}
+
+// TestBenchmark_CostAndPerformanceComparison
+// 验证 AGRAG (0-Token 统计学抽取) 与 Lazy Indexing 相比传统 Eager Indexing 的 LLM 调用降幅达到 100%
+func TestBenchmark_CostAndPerformanceComparison(t *testing.T) {
+	ctx := context.Background()
+	mockEmbed := &BenchmarkMockEmbed{}
+
+	// 1. 传统 Eager + LLM 模式
+	eagerLLM := &CountingMockLLM{}
+	eagerEngine := stargraph.NewEngine(eagerLLM, mockEmbed, stargraph.DefaultConfig())
+	defer func() { _ = eagerEngine.Close() }()
+
+	doc := &document.Document{
+		ID:      "doc-benchmark-01",
+		Content: "MCU_STM32 connects with SENSOR_BME280 using BUS_I2C line. CLK_PIN synchronizes data transfer.",
+	}
+
+	if err := eagerEngine.Insert(ctx, doc); err != nil {
+		t.Fatalf("Eager insert failed: %v", err)
+	}
+	eagerCallsDuringIndexing := eagerLLM.CompleteCallCount
+	t.Logf("Eager Indexing LLM Calls: %d", eagerCallsDuringIndexing)
+
+	// 2. 优化 Lazy + 0-Token AGRAG 模式
+	lazyLLM := &CountingMockLLM{}
+	lazyCfg := stargraph.DefaultConfig()
+	lazyCfg.IndexMode = stargraph.IndexModeLazy
+	lazyCfg.ExtractorType = stargraph.ExtractorTypeCooccurrence
+	lazyCfg.CooccurrenceConfig.MinCooccurFreq = 1
+
+	lazyEngine := stargraph.NewEngine(lazyLLM, mockEmbed, lazyCfg)
+	defer func() { _ = lazyEngine.Close() }()
+
+	if err := lazyEngine.Insert(ctx, doc); err != nil {
+		t.Fatalf("Lazy insert failed: %v", err)
+	}
+	lazyCallsDuringIndexing := lazyLLM.CompleteCallCount
+	t.Logf("Lazy + AGRAG Indexing LLM Calls: %d (Zero Token Cost)", lazyCallsDuringIndexing)
+
+	// 断言：AGRAG + Lazy 建库期间调用 LLM 次数必须为 0
+	if lazyCallsDuringIndexing != 0 {
+		t.Errorf("Expected 0 LLM calls during AGRAG Lazy indexing, got: %d", lazyCallsDuringIndexing)
+	}
+
+	// 3. DRIFT 检索精准度与 LLM 消耗验证
+	driftReq := &search.Request{
+		Query: "Diagnose connection between MCU_STM32 and BUS_I2C",
+		Mode:  search.ModeDRIFT,
+	}
+	res, err := lazyEngine.Query(ctx, driftReq)
+	if err != nil {
+		t.Fatalf("DRIFT Query failed: %v", err)
+	}
+	if res.Answer == "" {
+		t.Errorf("Expected non-empty DRIFT response")
+	}
+
+	// 单次查询只调用 1 次 LLM 生成答案
+	if lazyLLM.CompleteCallCount != 1 {
+		t.Errorf("Expected exactly 1 LLM call for DRIFT answer synthesis, got %d", lazyLLM.CompleteCallCount)
+	}
+}

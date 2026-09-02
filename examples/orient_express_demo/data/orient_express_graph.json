@@ -1,0 +1,729 @@
+{
+  "project": "StarGraph: Murder on the Orient Express Knowledge Graph Benchmark",
+  "version": "1.1.0",
+  "generated_at": "2026-09-01T23:20:00Z",
+  "metadata": {
+    "novel": "Murder on the Orient Express (东方快车谋杀案)",
+    "author": "Agatha Christie",
+    "total_chunks": 6,
+    "total_nodes": 25,
+    "total_edges": 48,
+    "total_communities": 4
+  },
+  "nodes": [
+    {
+      "id": "entity:CASSETTI",
+      "name": "雷切特 / 卡塞蒂 (Samuel Ratchett / Cassetti)",
+      "type": "VICTIM_CRIMINAL",
+      "category": "victim",
+      "cabin": 2,
+      "reveal_stage": 0,
+      "surface_role": "美国富商 (声称遭恐吓重金求保)",
+      "secret_role": "五年前阿姆斯特朗绑架撕票案首犯，逃脱法律制裁的恶魔",
+      "description": "东方快车谋杀案被害人，身中12刀身亡。曾绑架杀害3岁女童黛西·阿姆斯特朗，致使阿姆斯特朗家破人亡。",
+      "color": "#ef4444"
+    },
+    {
+      "id": "entity:HERCULE_POIROT",
+      "name": "赫丘勒·白罗 (Hercule Poirot)",
+      "type": "DETECTIVE",
+      "category": "investigator",
+      "cabin": 1,
+      "reveal_stage": 0,
+      "surface_role": "比利时名侦探",
+      "secret_role": "本案裁判官，最终选择维护人性的实质正义，向警方隐瞒真相",
+      "description": "加莱车厢唯一的局外人侦探，通过缜密逻辑识破12人共谋闭环并洞悉人性的正义。",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "name": "【物证超级节点】12处深浅各异的刺伤",
+      "type": "EVIDENCE_SUPER_HUB",
+      "category": "evidence_hub",
+      "cabin": 2,
+      "reveal_stage": 0,
+      "surface_role": "死者身上的离奇创口",
+      "secret_role": "12人复仇陪审团共同行刑的铁证：有的致命、有的轻浅、左右手并存",
+      "description": "现场最关键的法医物证：12处创口具有完全不同的力度、方向与手法，证明有多名凶手轮流刺击。",
+      "color": "#dc2626"
+    },
+    {
+      "id": "entity:PHYSICAL_EVIDENCES",
+      "name": "【现场杂项物证】烧焦纸片 / H手帕 / 烟斗通条",
+      "type": "EVIDENCE_COLLECTION",
+      "category": "evidence_hub",
+      "cabin": 2,
+      "reveal_stage": 0,
+      "surface_role": "散落车厢的混乱线索",
+      "secret_role": "真伪混杂的线索：纸片指向阿姆斯特朗案，手帕属于公主，通条指向阿布思诺",
+      "description": "现场发现的散落线索，初期用于互相混淆视听与误导侦探向外来刺客方向侦查。",
+      "color": "#94a3b8"
+    },
+    {
+      "id": "entity:MRS_HUBBARD",
+      "name": "赫伯德夫人 / 琳达·亚登 (Mrs. Hubbard / Linda Arden)",
+      "type": "SUSPECT_RINGMASTER",
+      "category": "suspect",
+      "cabin": 3,
+      "reveal_stage": 1,
+      "surface_role": "喧闹浮夸的美国老太太",
+      "secret_role": "黛西的外祖母、著名悲剧女演员琳达·亚登（全盘复仇总策划）",
+      "description": "策划12人陪审团复仇案的灵魂人物，假装包厢有男人闯入制造假线索。",
+      "color": "#a855f7"
+    },
+    {
+      "id": "entity:MARY_DEBENHAM",
+      "name": "玛丽·德本汉 (Mary Debenham)",
+      "type": "SUSPECT_INTELLECT",
+      "category": "suspect",
+      "cabin": 11,
+      "reveal_stage": 1,
+      "surface_role": "冷静理智的英国年轻家庭教师",
+      "secret_role": "曾任阿姆斯特朗家秘书兼家庭教师，深爱黛西，复仇策划核心之一",
+      "description": "表面与车上所有人素不相识，实为阿姆斯特朗家核心成员，与阿布思诺上校相恋。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:COLONEL_ARBURTHNOT",
+      "name": "阿布思诺上校 (Colonel Arbuthnot)",
+      "type": "SUSPECT_MILITARY",
+      "category": "suspect",
+      "cabin": 15,
+      "reveal_stage": 1,
+      "surface_role": "严肃守纪的英国印度驻军军官",
+      "secret_role": "阿姆斯特朗上校的生死挚友与战友，发誓为战友全家复仇",
+      "description": "案发时与麦奎恩畅谈政治互做伪证，因深爱玛丽·德本汉并誓为挚友讨回公道加入复仇。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:PIERRE_MICHEL",
+      "name": "皮埃尔·米歇尔 (Pierre Michel)",
+      "type": "SUSPECT_STAFF",
+      "category": "suspect",
+      "cabin": 0,
+      "reveal_stage": 1,
+      "surface_role": "辛普伦东方快车资深列车乘务员",
+      "secret_role": "阿姆斯特朗家受冤自杀女仆苏珊的亲生父亲",
+      "description": "利用乘务员职务之便为12名刺客开启车厢与掩护走廊动线。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:HECTOR_MCQUEEN",
+      "name": "赫克特·麦奎恩 (Hector McQueen)",
+      "type": "SUSPECT_SECRETARY",
+      "category": "suspect",
+      "cabin": 6,
+      "reveal_stage": 1,
+      "surface_role": "雷切特的年轻美国私人秘书",
+      "secret_role": "负责阿姆斯特朗案的地方检察官之子，极度崇拜索尼娅·阿姆斯特朗",
+      "description": "卧底在卡塞蒂身边掌握其行踪与恐吓信，负责下药并为阿布思诺上校提供不在场证明。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:EDWARD_MASTERMAN",
+      "name": "爱德华·马斯特曼 (Edward Masterman)",
+      "type": "SUSPECT_VALET",
+      "category": "suspect",
+      "cabin": 4,
+      "reveal_stage": 1,
+      "surface_role": "刻板正统的雷切特英国男仆",
+      "secret_role": "阿姆斯特朗上校一战期间的勤务兵与管家",
+      "description": "在上校死后痛恨卡塞蒂，与福卡雷利同住一室并互为不在场证明。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:PRINCESS_DRAGOMIROFF",
+      "name": "娜塔丽亚·卓戈米罗夫公主 (Princess Dragomiroff)",
+      "type": "SUSPECT_NOBLE",
+      "category": "suspect",
+      "cabin": 14,
+      "reveal_stage": 1,
+      "surface_role": "年迈体弱、丑陋威严的俄国流亡贵族",
+      "secret_role": "琳达·亚登的挚友、黛西母亲索尼娅的教母",
+      "description": "地位崇高，现场遗留的绣“H”手帕即属于她（俄文字母N），坚决支持诛杀凶犯。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:HILDEGARDE_SCHMIDT",
+      "name": "希德加第·施密特 (Hildegarde Schmidt)",
+      "type": "SUSPECT_MAID",
+      "category": "suspect",
+      "cabin": 8,
+      "reveal_stage": 1,
+      "surface_role": "卓戈米罗夫公主的德国忠厚女仆",
+      "secret_role": "阿姆斯特朗家当年极受喜爱的厨师",
+      "description": "指认假列车员制服扣子，为公主服务并刺下属于厨师的一刀。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:ANTONIO_FOSCARELLI",
+      "name": "安东尼奥·福卡雷利 (Antonio Foscarelli)",
+      "type": "SUSPECT_DRIVER",
+      "category": "suspect",
+      "cabin": 5,
+      "reveal_stage": 1,
+      "surface_role": "喋喋不休的意大利汽车推销员",
+      "secret_role": "阿姆斯特朗家当年的司机，视小黛西如己出",
+      "description": "极富义气的南欧司机，与马斯特曼互保不在场证明并参与刺杀。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:GRETA_OHLSSON",
+      "name": "葛丽泰·奥尔森 (Greta Ohlsson)",
+      "type": "SUSPECT_NURSE",
+      "category": "suspect",
+      "cabin": 10,
+      "reveal_stage": 1,
+      "surface_role": "胆小虔诚的瑞典传教士",
+      "secret_role": "曾任小黛西·阿姆斯特朗的专职看护保姆",
+      "description": "小黛西遇害给她造成终生心理创伤，与玛丽·德本汉互保不在场证明。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:CYRUS_HARDMAN",
+      "name": "赛勒斯·哈德曼 (Cyrus Hardman)",
+      "type": "SUSPECT_DETECTIVE",
+      "category": "suspect",
+      "cabin": 16,
+      "reveal_stage": 1,
+      "surface_role": "受雇于雷切特的美国私家侦探",
+      "secret_role": "受冤跳楼自尽女仆苏珊生前的前男友/情人",
+      "description": "借护卫之名卧底监视卡塞蒂，故意向白罗提供“深肤色假刺客”假口供。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:COUNT_ANDRENYI",
+      "name": "安德烈尼伯爵 (Count Andrenyi)",
+      "type": "SUSPECT_DIPLOMAT",
+      "category": "suspect",
+      "cabin": 13,
+      "reveal_stage": 1,
+      "surface_role": "享有外交豁免权的匈牙利贵族外交官",
+      "secret_role": "为保护深爱的妻子（黛西姨妈），代替妻子刺下属于她的一刀",
+      "description": "用油迹涂改妻子护照上的真名海伦娜（Helena -> Elena），坚决替妻复仇。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:COUNTESS_ANDRENYI",
+      "name": "海伦娜·安德烈尼伯爵夫人 (Countess Andrenyi)",
+      "type": "SUSPECT_INNOCENT",
+      "category": "suspect",
+      "cabin": 12,
+      "reveal_stage": 1,
+      "surface_role": "年轻貌美的匈牙利伯爵夫人",
+      "secret_role": "索尼娅·阿姆斯特朗的亲妹妹、黛西的亲姨妈（海伦娜·哥登堡）",
+      "description": "全车12人中唯一没有亲手刺下刀痕的人（由其丈夫伯爵代刺以避免其双手染血）。",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "name": "【超级核心】阿姆斯特朗绑架惨案 (Armstrong Tragedy)",
+      "type": "TRAGIC_SUPER_HUB",
+      "category": "tragedy_hub",
+      "cabin": null,
+      "reveal_stage": 2,
+      "surface_role": "5年前震惊全美的世纪惨案",
+      "secret_role": "东方快车上全员复仇动机的唯一向心力核心源泉",
+      "description": "卡塞蒂策划绑架杀害3岁黛西，摧毁了整个阿姆斯特朗家族，并在5年后引发东方快车正义裁决。",
+      "color": "#eab308"
+    },
+    {
+      "id": "entity:DAISY_ARMSTRONG",
+      "name": "黛西·阿姆斯特朗 (Daisy Armstrong)",
+      "type": "TRAGIC_VICTIM",
+      "category": "tragedy_hub",
+      "cabin": null,
+      "reveal_stage": 2,
+      "surface_role": "已故遇害女童",
+      "secret_role": "12人复仇行动守护的灵魂象征",
+      "description": "阿姆斯特朗上校与索尼娅的3岁独生女，5年前遭卡塞蒂绑架撕票。",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "entity:SUSAN_NURSEMAID",
+      "name": "苏珊 (Suzanne / Paulette)",
+      "type": "TRAGIC_VICTIM",
+      "category": "tragedy_hub",
+      "cabin": null,
+      "reveal_stage": 2,
+      "surface_role": "已故无辜法国女仆",
+      "secret_role": "米歇尔之女、哈德曼恋人，含冤跳楼引燃二人复仇决心",
+      "description": "绑架案后被警方严酷审讯，不堪冤屈跳楼自尽。",
+      "color": "#f59e0b"
+    }
+  ],
+  "edges": [
+    {
+      "source": "entity:CASSETTI",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "FATALLY_WOUNDED_BY",
+      "label": "身中12处深浅刀伤",
+      "weight": 1.0,
+      "reveal_stage": 0,
+      "truth_only": false,
+      "category": "physical_evidence"
+    },
+    {
+      "source": "entity:CASSETTI",
+      "target": "entity:PHYSICAL_EVIDENCES",
+      "relation": "ASSOCIATED_EVIDENCES",
+      "label": "现场散落遗留物",
+      "weight": 0.8,
+      "reveal_stage": 0,
+      "truth_only": false,
+      "category": "physical_evidence"
+    },
+    {
+      "source": "entity:MARY_DEBENHAM",
+      "target": "entity:GRETA_OHLSSON",
+      "relation": "ALIBI_MUTUAL",
+      "label": "同室互证睡觉 (假不在场证明)",
+      "weight": 0.5,
+      "reveal_stage": 1,
+      "truth_only": false,
+      "category": "alibi_loop"
+    },
+    {
+      "source": "entity:COLONEL_ARBURTHNOT",
+      "target": "entity:HECTOR_MCQUEEN",
+      "relation": "ALIBI_MUTUAL",
+      "label": "吸烟室夜谈 (互为不在场证明)",
+      "weight": 0.5,
+      "reveal_stage": 1,
+      "truth_only": false,
+      "category": "alibi_loop"
+    },
+    {
+      "source": "entity:EDWARD_MASTERMAN",
+      "target": "entity:ANTONIO_FOSCARELLI",
+      "relation": "ALIBI_MUTUAL",
+      "label": "同住4/5号包厢互为证人",
+      "weight": 0.5,
+      "reveal_stage": 1,
+      "truth_only": false,
+      "category": "alibi_loop"
+    },
+    {
+      "source": "entity:HILDEGARDE_SCHMIDT",
+      "target": "entity:PRINCESS_DRAGOMIROFF",
+      "relation": "ALIBI_MUTUAL",
+      "label": "主仆侍奉互证",
+      "weight": 0.6,
+      "reveal_stage": 1,
+      "truth_only": false,
+      "category": "alibi_loop"
+    },
+    {
+      "source": "entity:COUNT_ANDRENYI",
+      "target": "entity:COUNTESS_ANDRENYI",
+      "relation": "ALIBI_MUTUAL",
+      "label": "夫妻全程在旁互证",
+      "weight": 0.6,
+      "reveal_stage": 1,
+      "truth_only": false,
+      "category": "alibi_loop"
+    },
+    {
+      "source": "entity:CYRUS_HARDMAN",
+      "target": "entity:PIERRE_MICHEL",
+      "relation": "ALIBI_MUTUAL",
+      "label": "走廊巡视口供互相印证",
+      "weight": 0.5,
+      "reveal_stage": 1,
+      "truth_only": false,
+      "category": "alibi_loop"
+    },
+    {
+      "source": "entity:CASSETTI",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "MASTERMIND_OF_CRIME",
+      "label": "绑架撕票罪魁祸首",
+      "weight": 1.0,
+      "reveal_stage": 2,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "target": "entity:DAISY_ARMSTRONG",
+      "relation": "INCLUDES_VICTIM",
+      "label": "受害女童 (3岁撕票)",
+      "weight": 1.0,
+      "reveal_stage": 2,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "target": "entity:SUSAN_NURSEMAID",
+      "relation": "INCLUDES_VICTIM",
+      "label": "受冤跳楼女仆",
+      "weight": 1.0,
+      "reveal_stage": 2,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:MRS_HUBBARD",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "GRANDMOTHER_AND_ORGANIZER",
+      "label": "黛西外祖母 / 复仇总指挥",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:MARY_DEBENHAM",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "GOVERNESS_AND_CORE",
+      "label": "家庭教师兼秘书 / 核心策划",
+      "weight": 0.95,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:COLONEL_ARBURTHNOT",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "COMRADE_AND_HONOR_GUARD",
+      "label": "上校生死战友 / 荣誉誓约",
+      "weight": 0.95,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:PIERRE_MICHEL",
+      "target": "entity:SUSAN_NURSEMAID",
+      "relation": "FATHER_OF_VICTIM",
+      "label": "苏珊亲生父亲",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:CYRUS_HARDMAN",
+      "target": "entity:SUSAN_NURSEMAID",
+      "relation": "LOVER_OF_VICTIM",
+      "label": "苏珊生前恋人",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:EDWARD_MASTERMAN",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "ORDERLY_AND_VALET",
+      "label": "一战勤务兵与忠诚男仆",
+      "weight": 0.9,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:ANTONIO_FOSCARELLI",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "DEVOTED_CHAUFFEUR",
+      "label": "家族专职司机",
+      "weight": 0.9,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:GRETA_OHLSSON",
+      "target": "entity:DAISY_ARMSTRONG",
+      "relation": "LOVING_NURSE",
+      "label": "专职看护保姆",
+      "weight": 0.95,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:PRINCESS_DRAGOMIROFF",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "GODMOTHER_AND_NOBLE_BACKER",
+      "label": "索尼娅教母 / 贵族后盾",
+      "weight": 0.95,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:HILDEGARDE_SCHMIDT",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "FAMILY_COOK",
+      "label": "当年大厨",
+      "weight": 0.9,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:COUNTESS_ANDRENYI",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "SISTER_AND_AUNT",
+      "label": "索尼娅亲妹妹 / 黛西姨妈",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:COUNT_ANDRENYI",
+      "target": "entity:COUNTESS_ANDRENYI",
+      "relation": "PROTECTOR_HUSBAND",
+      "label": "深爱妻子 / 替妻行刑",
+      "weight": 0.95,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:HECTOR_MCQUEEN",
+      "target": "entity:ARMSTRONG_TRAGEDY_HUB",
+      "relation": "PROSECUTOR_SON_DEVOTEE",
+      "label": "办案检察官之子",
+      "weight": 0.9,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "kinship_servant"
+    },
+    {
+      "source": "entity:MRS_HUBBARD",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第1刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:MARY_DEBENHAM",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第2刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:COLONEL_ARBURTHNOT",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第3刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:PIERRE_MICHEL",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第4刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:HECTOR_MCQUEEN",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第5刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:EDWARD_MASTERMAN",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第6刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:PRINCESS_DRAGOMIROFF",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第7刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:HILDEGARDE_SCHMIDT",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第8刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:ANTONIO_FOSCARELLI",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第9刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:GRETA_OHLSSON",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第10刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:CYRUS_HARDMAN",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第11刀",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    },
+    {
+      "source": "entity:COUNT_ANDRENYI",
+      "target": "entity:TWELVE_STAB_WOUNDS_HUB",
+      "relation": "AVENGED_STAB",
+      "label": "刺下第12刀(代妻)",
+      "weight": 1.0,
+      "reveal_stage": 3,
+      "truth_only": true,
+      "category": "murder_stab"
+    }
+  ],
+  "communities": [
+    {
+      "id": "comm_armstrong_kin_and_military",
+      "level": 0,
+      "title": "阿姆斯特朗亲属与军界战友同盟",
+      "summary": "以琳达·亚登（赫伯德夫人）、安德烈尼伯爵夫妇、阿布思诺上校为核心的亲情与荣誉复仇群体，具备高度组织力与执行力。",
+      "members": ["entity:MRS_HUBBARD", "entity:COUNT_ANDRENYI", "entity:COUNTESS_ANDRENYI", "entity:COLONEL_ARBURTHNOT", "entity:PRINCESS_DRAGOMIROFF"]
+    },
+    {
+      "id": "comm_armstrong_household_servants",
+      "level": 0,
+      "title": "阿姆斯特朗家政服务与雇员复仇同盟",
+      "summary": "由阿姆斯特朗家当年的老仆从（家庭教师玛丽、勤务兵马斯特曼、司机福卡雷利、厨师施密特、护士奥尔森）及自杀女仆亲属（列车员米歇尔、情人哈德曼）组成的深仇复仇群。",
+      "members": ["entity:MARY_DEBENHAM", "entity:EDWARD_MASTERMAN", "entity:ANTONIO_FOSCARELLI", "entity:HILDEGARDE_SCHMIDT", "entity:GRETA_OHLSSON", "entity:PIERRE_MICHEL", "entity:CYRUS_HARDMAN", "entity:HECTOR_MCQUEEN"]
+    },
+    {
+      "id": "comm_orient_express_false_alibis",
+      "level": 1,
+      "title": "加莱车厢乘客假不在场证明网络",
+      "summary": "12名乘客互相在审讯中提供的封闭不在场证明环路（A保B、C保D、吸烟室畅聊、同室睡觉），用于在物理上彻底排除单一作案嫌疑。",
+      "members": ["entity:MARY_DEBENHAM", "entity:GRETA_OHLSSON", "entity:COLONEL_ARBURTHNOT", "entity:HECTOR_MCQUEEN", "entity:EDWARD_MASTERMAN", "entity:ANTONIO_FOSCARELLI", "entity:HILDEGARDE_SCHMIDT", "entity:PRINCESS_DRAGOMIROFF"]
+    },
+    {
+      "id": "comm_global_twelve_jury_conspiracy",
+      "level": 2,
+      "title": "东方快车十二人复仇陪审团（全局共谋宏观全景）",
+      "summary": "全车12名嫌疑人因法律无法制裁逃脱恶匪卡塞蒂，在琳达·亚登等人的密谋下自发组成12人民间陪审团，各自刺下一刀实现正义死刑判决。",
+      "members": ["entity:MRS_HUBBARD", "entity:MARY_DEBENHAM", "entity:COLONEL_ARBURTHNOT", "entity:PIERRE_MICHEL", "entity:HECTOR_MCQUEEN", "entity:EDWARD_MASTERMAN", "entity:PRINCESS_DRAGOMIROFF", "entity:HILDEGARDE_SCHMIDT", "entity:ANTONIO_FOSCARELLI", "entity:GRETA_OHLSSON", "entity:CYRUS_HARDMAN", "entity:COUNT_ANDRENYI", "entity:COUNTESS_ANDRENYI", "entity:ARMSTRONG_TRAGEDY_HUB", "entity:TWELVE_STAB_WOUNDS_HUB"]
+    }
+  ],
+  "benchmarks": [
+    {
+      "id": "case_1_multihop_debenham_motive",
+      "title": "关卡 1: 挖掘隐藏的多跳关系与作案动机",
+      "query": "玛丽·德本汉（Mary Debenham）在案发当晚是否有作案嫌疑？她与死者雷切特有什么深层动机？",
+      "vector_rag": {
+        "retrieved_chunk_ids": ["chunk_part2_interrogation_anglo_american"],
+        "retrieved_text_snippet": "英国年轻女教师玛丽·德本汉表现得异常冷静克制，声称自己只是从巴格达返英的普通家庭教师，与车上所有人素不相识，当晚一直在房间由葛丽泰作证。",
+        "answer": "根据审讯记录，玛丽·德本汉是一名普通的英国年轻家庭教师，与死者雷切特及其他乘客素不相识。案发当晚她与瑞典传教士葛丽泰·奥尔森同住一室，有完整的不在场证明，未发现任何作案嫌疑与动机。",
+        "flaw_analysis": "【致命失效】向量语义检索只能命中表面审讯片段（Chunk 4），无法将 Chunk 4（表面身份）与 Chunk 5（阿姆斯特朗惨案）以及 Chunk 6（真实身份）进行跨文档链路穿透，被玛丽的表面口供完全欺骗。"
+      },
+      "stargraph_rag": {
+        "mode": "drift",
+        "traversed_path": [
+          "玛丽·德本汉 (entity:MARY_DEBENHAM)",
+          "--> [GOVERNESS_AND_CORE] --> 阿姆斯特朗惨案超节点 (entity:ARMSTRONG_TRAGEDY_HUB)",
+          "--> [INCLUDES_VICTIM] --> 黛西·阿姆斯特朗 (entity:DAISY_ARMSTRONG)",
+          "<-- [MASTERMIND_OF_CRIME] <-- 卡塞蒂 / 雷切特 (entity:CASSETTI)",
+          "--> [AVENGED_STAB] --> 12处刺伤超节点 (刺下第2刀)"
+        ],
+        "answer": "【StarGraph 动态穿梭推理】玛丽·德本汉具有重大作案嫌疑和极深动机：\n1. 表面上她自称普通教师，但知识图谱多跳拓扑显示：她曾是阿姆斯特朗家深受信任的秘书兼女家庭教师；\n2. 死者雷切特的真实身份正是当年绑架杀害小黛西·阿姆斯特朗的主谋卡塞蒂，与玛丽有血海深仇；\n3. 玛丽与室友葛丽泰的不在场证明系精心串通的伪证，她是12人复仇陪审团的核心策划者之一，并在当晚亲手刺下第2刀。",
+        "metrics": {
+          "hops": 3,
+          "token_cost_ratio": "0.12x (比全量遍历节省 88% Token)",
+          "correctness": "100% 揭露多跳隐藏动机"
+        }
+      }
+    },
+    {
+      "id": "case_2_closed_loop_alibi_detection",
+      "title": "关卡 2: 穿透互相担保的闭环谎言网络",
+      "query": "加莱车厢各位乘客的不在场证明是否可靠？是否存在矛盾或人为串通？",
+      "vector_rag": {
+        "retrieved_chunk_ids": ["chunk_part2_interrogation_staff", "chunk_part2_interrogation_foreign"],
+        "retrieved_text_snippet": "麦奎恩与阿布思诺在吸烟室畅谈政治；马斯特曼与福卡雷利同住整夜未出；奥尔森与德本汉互证对方在床睡觉……",
+        "answer": "加莱车厢乘客的不在场证明非常可靠且相互支持。例如麦奎恩与上校互相作证，男仆马斯特曼与推销员福卡雷利互为证人，女教师德本汉也有瑞典传教士作证。所有人都证明彼此案发时在睡觉或谈话，具备坚固的合法不在场证明。",
+        "flaw_analysis": "【致命失效】向量检索孤立提取局部证词，判定每段证词都是“合规合理的”，缺乏全图拓扑约束能力，无法识别所有乘客两两结对、相互担保形成的'全图无死角闭环（Cycle Graph）'本质上是人为构造的伪证掩护网。"
+      },
+      "stargraph_rag": {
+        "mode": "local",
+        "traversed_path": [
+          "ALIBI_LOOP: 德本汉 <-> 奥尔森 (双人包厢互证)",
+          "ALIBI_LOOP: 麦奎恩 <-> 阿布思诺 (吸烟室夜谈互证)",
+          "ALIBI_LOOP: 马斯特曼 <-> 福卡雷利 (双人包厢互证)",
+          "ALIBI_LOOP: 施密特 <-> 卓戈米罗夫公主 (主仆互证)",
+          "ALIBI_LOOP: 安德烈尼伯爵 <-> 伯爵夫人 (夫妻互证)",
+          "ALIBI_LOOP: 哈德曼 <-> 米歇尔 (列车动线互证)"
+        ],
+        "answer": "【StarGraph 拓扑冲突检测】乘客的不在场证明全部是伪造的封闭串供环（Closed-Loop Alibi）：\n1. 图拓扑分析显示全车乘客精确划分为 6 对'互证闭环'，无一单人落单，在统计学与拓扑学上呈现极度反常的人为设计特征；\n2. 结合第三部真相图谱，互为证人的两人私底下均存在极深的隐秘同盟关系（如上校与德本汉相恋并为战友复仇、司机与男仆皆为旧仆）；\n3. 所谓的不在场证明是 12 人为了掩护轮流进入 2 号包厢行刑而集体编织的拓扑烟幕弹。",
+        "metrics": {
+          "hops": 2,
+          "cycle_count": 6,
+          "correctness": "100% 识别闭环伪证"
+        }
+      }
+    },
+    {
+      "id": "case_3_global_conspiracy_summary",
+      "title": "关卡 3: 宏观全景与十二人复仇共谋推演",
+      "query": "东方快车上的12名嫌疑人之间是否存在某种整体性的隐秘模式或共同动机？真正的凶手是谁？",
+      "vector_rag": {
+        "retrieved_chunk_ids": ["chunk_part1_murder_scene", "chunk_part2_interrogation_foreign", "chunk_part3_poirot_solution"],
+        "retrieved_text_snippet": "波洛提出了两种可能的解释。第一种解释是一个憎恨雷切特的陌生人在温科夫齐登上了东方快车在谋杀后逃离……",
+        "answer": "根据第一种解释，真凶可能是一个在温科夫齐上车的神秘外来刺客，他杀害雷切特后跳车逃离。车上乘客来自英国、美国、瑞典、俄国、匈牙利、意大利等不同国家，阶层各异，未发现统一的组织关系。",
+        "flaw_analysis": "【致命失效】面对宏观归纳问题，文本中没有单一匹配高相似度段落。向量检索随机拼凑片段，极易被波洛提出的“第一种烟幕弹假说（外来陌生刺客）”带偏，无法利用社区报告归纳出全员共谋。"
+      },
+      "stargraph_rag": {
+        "mode": "global",
+        "traversed_path": [
+          "Community Level 2: [东方快车十二人复仇陪审团]",
+          "-> Map: 12名成员全部围绕【阿姆斯特朗绑架案超节点】存在直系亲属/仆从/战友关系",
+          "-> Reduce: 12人分别向【12处刺伤超节点】刺入1刀，组成民间复仇法庭"
+        ],
+        "answer": "【StarGraph 社区 Map-Reduce 归纳】全车 12 名嫌疑人存在整体性的、高度协同的复仇共谋：\n1. 【共同动机】：所有 12 名乘客全部与五年前被卡塞蒂残害的【阿姆斯特朗家族】存在血缘、主仆、挚友或爱情纽带；\n2. 【真凶真相】：没有外来刺客，真正的凶手就是车上的全部 12 名乘客。他们组成了一个由 12 人构成的民间复仇陪审团；\n3. 【作案手法】：每人进入雷切特包厢亲手刺入一刀，共同汇聚成死者身上的【12处刺伤】，用私力救济审判了逃脱法律的卡塞蒂。",
+        "metrics": {
+          "community_level": 2,
+          "global_coverage": "100% 覆盖12人全员网络与两大超级节点",
+          "correctness": "100% 正确推演出12人复仇法庭真相"
+        }
+      }
+    }
+  ]
+}

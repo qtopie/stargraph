@@ -11,6 +11,7 @@ type Mode string
 const (
 	ModeLocal  Mode = "local"  // 子图遍历精准推理
 	ModeGlobal Mode = "global" // 社区报告 Map-Reduce 宏观总结
+	ModeDRIFT  Mode = "drift"  // 动态路径穿梭检索 (Dynamic Reasoning & Traversal)
 	ModeHybrid Mode = "hybrid" // 稠密向量 + BM25 混合检索
 	ModeAuto   Mode = "auto"   // 自适应 Intent Router 智能路由
 )

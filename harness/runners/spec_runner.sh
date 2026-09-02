@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "[Harness Runner] Executing Spec BDD Scenarios and Invariant Assertions..."
 
-# Place spec runner & assertion checks here
-# E.g., validating Mapped Test fields in specs/modules/*.spec.md against testings/
+# 1. 执行 Go 原生全套单元测试与 Harness 跑通验证
+go test -race -v ./pkg/... ./testings/...
 
 echo "[Harness Runner] All Spec BDD assertions completed successfully."

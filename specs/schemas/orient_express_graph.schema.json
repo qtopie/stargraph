@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OrientExpressGraphSchema",
+  "description": "StarGraph 东方快车谋杀案知识图谱与推理对比数据集标准契约",
+  "type": "object",
+  "required": ["project", "version", "nodes", "edges", "communities", "benchmarks"],
+  "properties": {
+    "project": { "type": "string" },
+    "version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "metadata": {
+      "type": "object",
+      "required": ["novel", "total_nodes", "total_edges", "total_communities"],
+      "properties": {
+        "novel": { "type": "string" },
+        "author": { "type": "string" },
+        "total_chunks": { "type": "integer" },
+        "total_nodes": { "type": "integer" },
+        "total_edges": { "type": "integer" },
+        "total_communities": { "type": "integer" }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type", "category", "reveal_stage"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "category": { "type": "string", "enum": ["victim", "investigator", "suspect", "tragedy_hub", "evidence_hub"] },
+          "cabin": { "type": ["integer", "null"] },
+          "reveal_stage": { "type": "integer", "enum": [0, 1, 2, 3], "description": "0: 案发现场, 1: 审讯口供, 2: 案中案揭秘, 3: 终极裁决" },
+          "surface_role": { "type": "string" },
+          "secret_role": { "type": "string" },
+          "description": { "type": "string" },
+          "color": { "type": "string" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "target", "relation", "label", "reveal_stage", "weight"],
+        "properties": {
+          "source": { "type": "string" },
+          "target": { "type": "string" },
+          "relation": { "type": "string" },
+          "label": { "type": "string" },
+          "weight": { "type": "number" },
+          "reveal_stage": { "type": "integer", "enum": [0, 1, 2, 3] },
+          "truth_only": { "type": "boolean" },
+          "category": { "type": "string", "enum": ["alibi_loop", "kinship_servant", "murder_stab", "physical_evidence"] }
+        }
+      }
+    },
+    "communities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "level", "title", "summary", "members"],
+        "properties": {
+          "id": { "type": "string" },
+          "level": { "type": "integer" },
+          "title": { "type": "string" },
+          "summary": { "type": "string" },
+          "members": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "benchmarks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "query", "vector_rag", "stargraph_rag"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "query": { "type": "string" },
+          "vector_rag": {
+            "type": "object",
+            "required": ["answer", "flaw_analysis"],
+            "properties": {
+              "retrieved_chunk_ids": { "type": "array", "items": { "type": "string" } },
+              "retrieved_text_snippet": { "type": "string" },
+              "answer": { "type": "string" },
+              "flaw_analysis": { "type": "string" }
+            }
+          },
+          "stargraph_rag": {
+            "type": "object",
+            "required": ["mode", "answer"],
+            "properties": {
+              "mode": { "type": "string", "enum": ["drift", "local", "global", "hybrid"] },
+              "traversed_path": { "type": "array", "items": { "type": "string" } },
+              "answer": { "type": "string" },
+              "metrics": { "type": "object" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

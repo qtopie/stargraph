@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>东方快车谋杀案 · 维多利亚侦探档案与 AI 探案台</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vis.js Network — local vendor copy (vis-network 9.1.9) -->
+  <script src="vendor/vis-network.min.js"></script>
+  <!-- Lucide Icons — local vendor copy (lucide 0.344.0) -->
+  <script src="vendor/lucide.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=JetBrains+Mono:wght@400;600&family=Noto+Serif+SC:wght@400;600;700;900&display=swap');
+
+    body {
+      font-family: 'Noto Serif SC', serif;
+      background-color: #F4EFE6;
+      color: #2C221E;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .font-cinzel {
+      font-family: 'Cinzel', serif;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #EAE3D6;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C4B5A2;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A89680;
+    }
+    .paper-card {
+      background-color: #FFFFFF;
+      border: 1px solid #DFD7C9;
+      box-shadow: 0 4px 12px rgba(44, 34, 30, 0.04), 0 1px 3px rgba(44, 34, 30, 0.02);
+    }
+    .train-track-light {
+      background: repeating-linear-gradient(90deg, #D5C9B8 0px, #D5C9B8 8px, transparent 8px, transparent 18px);
+    }
+    /* ── Network Canvas: guarantee absolute pixel dimensions for Vis.js ── */
+    .network-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .network-wrap canvas-container,
+    #player-network-container,
+    #dev-network-container {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    /* Edge label styling */
+    .vis-label {
+      background: rgba(244,239,230,0.92) !important;
+      padding: 1px 4px !important;
+      border-radius: 3px !important;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-x-hidden md:overflow-hidden select-none bg-[#F4EFE6] text-[#2C221E]">
+
+  <!-- Top Victorian Header (Responsive for Mobile & Desktop) -->
+  <header class="bg-[#EFE8DC] border-b border-[#D8CCBC] px-3 md:px-6 py-2 flex flex-wrap items-center justify-between z-30 shrink-0 shadow-xs gap-2">
+    <div class="flex items-center space-x-2 md:space-x-3">
+      <div class="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-[#8C2D19] text-[#FAF7F2] flex items-center justify-center font-black shadow-sm">
+        <i data-lucide="feather" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-1.5 md:space-x-2">
+          <h1 class="text-sm md:text-base font-black tracking-wide text-[#2C221E] font-cinzel">ORIENT EXPRESS DOSSIER</h1>
+          <span class="text-[9px] md:text-[10px] px-1.5 md:px-2 py-0.5 rounded font-bold bg-[#8C2D19]/10 text-[#8C2D19] border border-[#8C2D19]/30">探案台</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dual Role Switcher & Story Re-open Button -->
+    <div class="flex items-center space-x-1 md:space-x-2">
+      <button onclick="openStoryIntro()" class="px-2.5 py-1 md:py-1.5 rounded-lg border border-[#8C2D19]/40 bg-[#FAF7F2] text-[#8C2D19] text-xs font-bold hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition flex items-center space-x-1 shadow-2xs">
+        <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+        <span>📜 案情故事</span>
+      </button>
+
+      <div class="flex items-center bg-[#E5DCD0] p-0.5 md:p-1 rounded-xl border border-[#D0C2B0] text-[11px] md:text-xs font-medium">
+        <button id="btn-role-player" onclick="switchMainRole('player')" class="px-2.5 md:px-4 py-1 md:py-1.5 rounded-lg flex items-center space-x-1.5 transition-all bg-[#8C2D19] text-[#FAF7F2] font-bold shadow-xs">
+          <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+          <span>侦探线索白板</span>
+        </button>
+        <button id="btn-role-dev" onclick="switchMainRole('dev')" class="px-2.5 md:px-4 py-1 md:py-1.5 rounded-lg flex items-center space-x-1.5 transition-all text-[#6B5E55] hover:text-[#2C221E]">
+          <i data-lucide="network" class="w-3.5 h-3.5"></i>
+          <span>GraphRAG 控制台</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Status -->
+    <div class="hidden lg:flex items-center space-x-2 text-xs">
+      <span class="px-3 py-1 rounded-lg bg-[#FAF7F2] text-[#2C221E] border border-[#D8CCBC] flex items-center space-x-1.5 font-mono shadow-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+        <span>StarGraph Engine: Ready</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- STORY PROLOGUE IMMERSIVE FULL-SCREEN DOSSIER (全屏案情与全员车厢侦探档案)         -->
+  <!-- ========================================================================= -->
+  <div id="story-intro-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1412]/95 backdrop-blur-md p-2 md:p-6 transition-opacity duration-300">
+    <div class="paper-card w-full h-full max-w-6xl max-h-[94vh] rounded-2xl p-4 md:p-8 shadow-2xl border-2 border-[#8C2D19]/60 flex flex-col relative overflow-hidden bg-[#FAF7F2]">
+      
+      <!-- Top Decorative Dossier Header -->
+      <div class="flex items-center justify-between border-b-2 border-[#8C2D19]/30 pb-3 mb-3 shrink-0">
+        <div class="flex items-center space-x-3 text-[#8C2D19]">
+          <div class="w-8 h-8 rounded-lg bg-[#8C2D19] text-[#FAF7F2] flex items-center justify-center font-bold">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <span class="font-cinzel font-black text-sm md:text-lg tracking-wider text-[#2C221E] block">SIMPLON ORIENT EXPRESS · CONFIDENTIAL DOSSIER</span>
+            <span class="text-[10px] md:text-xs text-[#786B62] font-mono">案件编号：1934-OE-0012 · 调查官专属绝密案卷</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 text-xs text-[#786B62]">
+          <span id="story-step-indicator" class="font-mono font-bold px-2.5 py-1 rounded bg-[#8C2D19]/10 text-[#8C2D19] border border-[#8C2D19]/20 text-xs">Card 1 / 5</span>
+          <button onclick="skipStoryIntro()" class="text-xs font-bold text-[#8C2D19] hover:underline px-2.5 py-1 rounded border border-[#8C2D19]/30 bg-[#FFFFFF] hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition">跳过 · 直接进入分析面板 ➔</button>
+        </div>
+      </div>
+
+      <!-- Story Cards Full-Screen Content Container (Scrollable) -->
+      <div class="flex-1 overflow-y-auto pr-1">
+        
+        <!-- Slide 0: 暴风雪与反锁包厢惨案 -->
+        <div id="story-slide-0" class="story-slide space-y-4 py-2">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold text-xs font-cinzel">ACT I · BLIZZARD TRAGEDY</span>
+            <h2 class="text-lg md:text-xl font-black text-[#2C221E] font-cinzel">第一幕 · 极寒暴风雪与午夜惊魂</h2>
+          </div>
+          <p class="text-xs md:text-sm text-[#4A3E38] leading-relaxed">
+            1934年深冬，从伊斯坦布尔开往法国加莱的豪华<strong>辛普伦东方快车</strong>在南斯拉夫崇山峻岭间突遇特大暴风雪，车头深陷雪堆，全车被迫熄火停驶在与世隔绝的荒野。
+          </p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-4 rounded-xl bg-[#F4EFE6] border border-[#D8CCBC] space-y-2">
+              <div class="flex items-center space-x-2 text-[#8C2D19] font-bold text-xs">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                <span>#2 包厢血案：富商雷切特暴毙</span>
+              </div>
+              <p class="text-xs text-[#2C221E] leading-relaxed">
+                深夜，2号包厢房门反锁，声称屡遭恐吓信威胁的美国富商<strong>山谬·雷切特</strong>被发现惨死于床上！现场一片狼藉，死者身上残留着多处刀痕，法医初步判断死因极为诡异……
+              </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[#FFF8EE] border border-[#E9D7BE] space-y-2">
+              <div class="flex items-center space-x-2 text-[#8C2D19] font-bold text-xs">
+                <i data-lucide="snowflake" class="w-4 h-4"></i>
+                <span>绝对封闭空间：凶手就在加莱车厢！</span>
+              </div>
+              <p class="text-xs text-[#5C3018] leading-relaxed">
+                列车四周积雪深达数米，窗外雪地没有任何脚印。列车长与比利时名侦探<strong>赫丘勒·白罗</strong>当即确认：<strong>凶手绝不可能逃离列车，必定隐藏在同车厢的乘客之中！</strong>
+              </p>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] text-xs text-[#2C221E] space-y-1">
+            <span class="font-bold text-[#8C2D19]">💡 现场勘验第一线索：</span>
+            <p class="text-[11px] text-[#4A3E38] leading-relaxed">
+              现场遗留了一块绣有贵族缩写“H”的精致亚麻手帕、一根烧焦的卷烟通条、以及在死者睡衣口袋被火烧毁半截的神秘纸片……
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide 1: 车厢嫌疑人档案 A组 (包厢 16 ~ 12) -->
+        <div id="story-slide-1" class="story-slide hidden space-y-3 py-2">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded bg-[#B45309] text-[#FAF7F2] font-bold text-xs font-cinzel">ACT II · PASSENGERS ROSTER (PART 1)</span>
+            <h2 class="text-base md:text-lg font-black text-[#2C221E] font-cinzel">加莱车厢乘客档案 (上) · 贵族与侦探组</h2>
+          </div>
+          <p class="text-xs text-[#786B62]">每位乘客均有独立包厢及明确口供，点击查阅名册详情：</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+            
+            <!-- #16 哈德曼 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#16 赛勒斯·哈德曼</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">美国私家侦探</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 自称受雇于雷切特防范暗杀，坚称凶手是深肤色、女人腔的小个子男人，整夜把守走廊。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 疑点：口供极为绘声绘色，是在提供真实线索还是在掩护特定通道？</p>
+            </div>
+
+            <!-- #15 上校 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#15 阿布思诺上校</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">英国驻印军官</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 刚正不阿的英国军官，声称与雷切特素昧平生，整晚在吸烟室与秘书麦奎恩畅谈政治互为不在场证明。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 疑点：登车前曾在车站与女教师玛丽窃窃私语，声称“等一切结束再谈”。</p>
+            </div>
+
+            <!-- #14 公主 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#14 卓戈米罗夫公主</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">俄国流亡贵族</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 年迈体衰、相貌丑陋却威严尊贵。声称彻夜卧床由女仆施密特陪伴朗读，完全不认识死者。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：虽深居简出，但随身手帕与织物极为考究，言谈间对美国暴发户极度鄙视。</p>
+            </div>
+
+            <!-- #13 伯爵 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#13 安德烈尼伯爵</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">匈牙利外交官</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 风度翩翩的外交贵族，坚称夫人服药后整夜熟睡，自己寸步不离在侧看护，出示外交豁免护照。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：极度抗拒侦探对夫人进行单独盘问，出示护照时显得格外谨慎。</p>
+            </div>
+
+            <!-- #12 伯爵夫人 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#12 海伦娜·伯爵夫人</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">匈牙利贵族夫人</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 年轻貌美却神情紧张脆弱，全程由丈夫代为作证，声称服下了大量安眠药整夜熟睡。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：精神状态高度紧绷，听到死者名字时有明显的回避与惊恐反应。</p>
+            </div>
+
+            <!-- #3 赫伯德夫人 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#3 赫伯德夫人</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">美国老太太</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 喋喋不休、喧闹浮夸的美国妇人。尖叫声称昨夜有男人持刀潜入其包厢，并在海绵袋里留下列车员扣子。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：情绪激动夸张，极力向所有人展示那枚可疑的列车员制服扣子。</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Slide 2: 车厢嫌疑人档案 B组 (包厢 10/11 ~ 0) -->
+        <div id="story-slide-2" class="story-slide hidden space-y-3 py-2">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded bg-[#B45309] text-[#FAF7F2] font-bold text-xs font-cinzel">ACT II · PASSENGERS ROSTER (PART 2)</span>
+            <h2 class="text-base md:text-lg font-black text-[#2C221E] font-cinzel">加莱车厢乘客档案 (下) · 平民与仆役组</h2>
+          </div>
+          <p class="text-xs text-[#786B62]">每位平民乘客亦形成了无懈可击的两两互证网络：</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+            
+            <!-- #10/11 玛丽·德本汉 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#10/11 玛丽·德本汉</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">英国家庭教师</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 从巴格达返英的家庭教师，谈吐冷静理性。当晚与室友葛丽泰互证整夜睡觉，声称完全不认识雷切特。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 疑点：在命案发生后表现出异乎寻常的沉着，对案情盘问滴水不漏。</p>
+            </div>
+
+            <!-- #10/11 葛丽泰·奥尔森 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#10/11 葛丽泰·奥尔森</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">瑞典传教士</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 性格胆小脆弱的瑞典传教士护士。称案发前曾去借阿司匹林，之后回房与玛丽互证睡觉。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 疑点：提起儿童话题时极度伤感，她曾受雇照顾过哪位可怜的孩子？</p>
+            </div>
+
+            <!-- #8 希德加第·施密特 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#8 希德加第·施密特</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">德国女仆</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 卓戈米罗夫公主的忠厚女仆。服侍公主入睡后回房，称在走廊曾撞见一名身材矮小、带假胡子的列车员。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：言行温顺拘谨，但对车厢内的走动动向与仆从安排非常熟悉。</p>
+            </div>
+
+            <!-- #6 赫克特·麦奎恩 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#6 赫克特·麦奎恩</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">雷切特私人秘书</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 年轻美国青年，负责死者的外语翻译与信件。称案发当晚一直在吸烟室与上校交谈直到深夜。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：虽受雇于死者，但言谈间毫不掩饰对雷切特恶劣人品的厌恶与反感。</p>
+            </div>
+
+            <!-- #4/5 爱德华·马斯特曼 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#4/5 爱德华·马斯特曼</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">英国男仆</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 刻板遵守规矩的英式男仆。称睡前给雷切特服下镇静剂后便回到包厢与福卡雷利同宿，整夜未出。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：态度冷漠、有条不紊，对主人的猝死没有流露出任何悲伤。</p>
+            </div>
+
+            <!-- #4/5 安东尼奥·福卡雷利 & #0 列车员 -->
+            <div class="p-3 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] shadow-2xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[#8C2D19]">#4/5 福卡雷利 & #0 米歇尔</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#EAE3D6] text-[#2C221E]">推销员 & 列车员</span>
+              </div>
+              <p class="text-[11px] text-[#4A3E38]"><strong>【公开身份与供词】</strong> 汽车推销员坚称整夜与男仆同住；资深列车员米歇尔坚称通宵值班守在走廊，仅看到神秘红和服背影。</p>
+              <p class="text-[10px] text-[#8C2D19] bg-[#FFF8EE] p-1 rounded">🔍 观察线索：二人口供极其详尽流利，与现场物证的时间线严丝合缝。</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Slide 3: 令人窒息的口供闭环与迷雾 -->
+        <div id="story-slide-3" class="story-slide hidden space-y-4 py-2">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded bg-[#6D28D9] text-[#FAF7F2] font-bold text-xs font-cinzel">ACT III · ALIBI LABYRINTH</span>
+            <h2 class="text-base md:text-lg font-black text-[#2C221E] font-cinzel">令人窒息的互证怪圈 · 完美谎言网</h2>
+          </div>
+          <p class="text-xs md:text-sm text-[#4A3E38] leading-relaxed">
+            名侦探白罗逐一盘问后发现，所有乘客居然构成了<strong>一张毫无破绽的闭环不在场证明网络</strong>：
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div class="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] space-y-1.5">
+              <span class="font-bold text-[#8C2D19] block">🔁 双人互证闭环</span>
+              <p class="text-[11px] text-[#4A3E38] leading-relaxed">
+                每一个乘客都有另一个人作为绝对目击证人，互相担保彼此在案发时间内绝对没有离开包厢一步！
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] space-y-1.5">
+              <span class="font-bold text-[#8C2D19] block">🕵️ 矛盾百出的物证</span>
+              <p class="text-[11px] text-[#4A3E38] leading-relaxed">
+                现场同时出现了绣字手帕（指向贵族女性）、烟斗通条（指向英国军官）、以及列车员制服扣子，线索互斥且刻意！
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#D8CCBC] space-y-1.5">
+              <span class="font-bold text-[#8C2D19] block">🗡️ 诡异的创口特征</span>
+              <p class="text-[11px] text-[#4A3E38] leading-relaxed">
+                死者身上的刀痕深浅不一，既有强有力的致命重创，也有微弱的擦伤；下刀角度更有左手与右手的巨大分歧，凶手究竟是何特征？
+              </p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border border-[#D8CCBC] text-xs text-[#2C221E]">
+            <span class="font-bold text-[#2C221E]">白罗探案箴言：</span>
+            <span class="italic text-[#4A3E38]">“当巧合多到不可能自然发生时，它就不是巧合，而是经过精心编排的戏剧。”</span>
+          </div>
+        </div>
+
+        <!-- Slide 4: 探长使命与分析控制台启航 -->
+        <div id="story-slide-4" class="story-slide hidden space-y-4 py-2">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded bg-[#166534] text-[#FAF7F2] font-bold text-xs font-cinzel">ACT IV · DETECTIVE ENGAGEMENT</span>
+            <h2 class="text-base md:text-lg font-black text-[#2C221E] font-cinzel">调查官就位 · 开启拓扑穿透分析</h2>
+          </div>
+          <p class="text-xs md:text-sm text-[#4A3E38] leading-relaxed">
+            现在，全案卷宗已全部移交至你的案板。你将借助 <strong>StarGraph 拓扑穿透引擎</strong> 与 <strong>侦探线索白板</strong> 展开多跳推理：
+          </p>
+
+          <div class="p-4 rounded-xl bg-[#FFF8EE] border-2 border-[#8C2D19]/30 space-y-2 text-xs">
+            <div class="font-bold text-[#8C2D19] text-sm flex items-center space-x-1.5">
+              <i data-lucide="target" class="w-4 h-4"></i>
+              <span>你的三大探案步骤：</span>
+            </div>
+            <div class="space-y-1.5 text-[#5C3018] text-xs">
+              <p><strong>Step 1：查验包厢与口供</strong> ➔ 在左侧平面图点击各包厢，比对乘客表面证词；</p>
+              <p><strong>Step 2：探索线索拓扑关系</strong> ➔ 在中央线索墙点击节点进行单点隔离聚焦，寻找隐藏的共谋网；</p>
+              <p><strong>Step 3：草拟推论与复盘</strong> ➔ 在右侧手稿写下你对死者真实身份、闭环伪证及 12 刀真相的判断，呼叫 AI 探长裁决！</p>
+            </div>
+          </div>
+
+          <div class="text-center pt-2">
+            <button onclick="skipStoryIntro()" class="px-8 py-3 rounded-xl bg-[#8C2D19] hover:bg-[#722312] text-[#FAF7F2] font-black text-sm shadow-md transition transform hover:scale-102 flex items-center justify-center space-x-2 mx-auto">
+              <i data-lucide="compass" class="w-5 h-5"></i>
+              <span>进入东方快车侦探案板 · 开始破案！</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Card Navigation Footer -->
+      <div class="flex items-center justify-between border-t-2 border-[#D8CCBC] pt-3 mt-3 shrink-0">
+        <button id="btn-story-prev" onclick="changeStorySlide(-1)" class="px-4 py-1.5 rounded-lg bg-[#EAE3D6] text-[#2C221E] font-bold text-xs hover:bg-[#DFD7C9] transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+          ◀ 上一幕
+        </button>
+        
+        <div class="flex items-center space-x-1.5" id="story-dots">
+          <!-- Rendered dynamically by JS -->
+        </div>
+
+        <button id="btn-story-next" onclick="changeStorySlide(1)" class="px-5 py-1.5 rounded-lg bg-[#8C2D19] hover:bg-[#722312] text-[#FAF7F2] font-bold text-xs shadow-xs transition flex items-center space-x-1">
+          <span>下一幕 ▶</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 1: PLAYER / DETECTIVE MODE (玩家侦探线索墙模式)                        -->
+  <!-- ========================================================================= -->
+  <div id="view-player" class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+    
+    <!-- Mobile Tab Switcher (Visible only on mobile devices) -->
+    <div class="md:hidden flex items-center justify-around bg-[#EFE8DC] border-b border-[#D8CCBC] p-1.5 shrink-0 z-20 text-xs font-bold">
+      <button onclick="switchPlayerMobileTab('left')" id="btn-pmob-left" class="flex-1 py-1.5 rounded-lg bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/30 shadow-2xs text-center flex items-center justify-center space-x-1">
+        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+        <span>包厢与口供</span>
+      </button>
+      <button onclick="switchPlayerMobileTab('center')" id="btn-pmob-center" class="flex-1 py-1.5 rounded-lg text-[#786B62] text-center flex items-center justify-center space-x-1">
+        <i data-lucide="network" class="w-3.5 h-3.5"></i>
+        <span>线索关系墙</span>
+      </button>
+      <button onclick="switchPlayerMobileTab('right')" id="btn-pmob-right" class="flex-1 py-1.5 rounded-lg text-[#786B62] text-center flex items-center justify-center space-x-1">
+        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+        <span>推断手稿</span>
+      </button>
+    </div>
+    
+    <!-- Left: Case File & Train Cabins (Width: 320px on desktop, full width on mobile) -->
+    <section id="player-panel-left" class="w-full md:w-80 bg-[#FAF7F2] border-r border-[#D8CCBC] flex flex-col shrink-0 overflow-y-auto md:overflow-hidden min-h-0">
+      
+      <!-- Brief Dossier -->
+      <div class="p-3.5 border-b border-[#D8CCBC] bg-[#F4EFE6]">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-bold text-[#8C2D19] font-cinzel">CASE BRIEF · 特大命案</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold">#2 包厢</span>
+        </div>
+        <p class="text-[11px] text-[#4A3E38] leading-relaxed">
+          深夜，2号包厢富商<strong class="text-[#8C2D19]">雷切特</strong>惨死于反锁车厢！现场一片狼藉，死者身上残留有多处离奇刀痕，深浅与手法极不一致。
+        </p>
+      </div>
+
+      <!-- Coach Map -->
+      <div class="p-3.5 border-b border-[#D8CCBC] bg-[#FAF7F2]">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-bold text-[#2C221E]">加莱车厢平面图</span>
+          <span class="text-[10px] text-[#786B62]">点击包厢查验</span>
+        </div>
+
+        <div class="bg-[#F4EFE6] p-2 rounded-lg border border-[#D8CCBC] text-[10px]">
+          <div class="grid grid-cols-6 gap-1 text-center">
+            <div onclick="playerSelectCabin(16)" id="p-cabin-16" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#16 哈德曼</div>
+            <div onclick="playerSelectCabin(15)" id="p-cabin-15" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#15 上校</div>
+            <div onclick="playerSelectCabin(14)" id="p-cabin-14" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#14 公主</div>
+            <div onclick="playerSelectCabin(13)" id="p-cabin-13" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#13 伯爵</div>
+            <div onclick="playerSelectCabin(12)" id="p-cabin-12" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#12 伯爵妻</div>
+            <div onclick="playerSelectCabin(3)" id="p-cabin-3" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#3 赫伯德</div>
+          </div>
+          <div class="grid grid-cols-6 gap-1 text-center mt-1">
+            <div onclick="playerSelectCabin(2)" id="p-cabin-2" class="cursor-pointer p-1 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold">#2 命案</div>
+            <div onclick="playerSelectCabin(1)" id="p-cabin-1" class="cursor-pointer p-1 rounded bg-[#2C3E50] text-[#FAF7F2] font-bold">#1 白罗</div>
+            <div onclick="playerSelectCabin(10)" id="p-cabin-10" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#10/11 玛丽</div>
+            <div onclick="playerSelectCabin(8)" id="p-cabin-8" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#8 施密特</div>
+            <div onclick="playerSelectCabin(6)" id="p-cabin-6" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#6 麦奎恩</div>
+            <div onclick="playerSelectCabin(4)" id="p-cabin-4" class="cursor-pointer p-1 rounded bg-[#FFFFFF] hover:bg-[#EAE3D6] border border-[#D5C9B8] transition">#4/5 男仆</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suspect Testimony Card -->
+      <div class="flex-1 p-3.5 overflow-y-auto bg-[#FAF7F2]">
+        <div class="flex items-center justify-between text-[#8C2D19] font-bold mb-1.5">
+          <span id="player-suspect-name" class="text-xs font-bold">玛丽·德本汉 (Mary Debenham)</span>
+          <span id="player-suspect-cabin" class="text-[10px] px-1.5 py-0.5 rounded bg-[#EAE3D6] text-[#2C221E]">包厢 #11</span>
+        </div>
+        <div class="space-y-2 text-[11px] text-[#2C221E] leading-relaxed">
+          <div class="p-2.5 rounded-lg bg-[#FFFFFF] border border-[#D8CCBC]">
+            <span class="text-[#786B62] font-bold block mb-0.5">【口供记录】:</span>
+            <p id="player-suspect-statement">自称普通家庭教师。当晚与室友葛丽泰·奥尔森互相证实整夜睡觉，声称与死者完全素不相识。</p>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#FFF8EE] border border-[#E9D7BE] text-[#8C2D19] text-[11px]">
+            <span class="font-bold block mb-0.5">🔍 侦探疑点:</span>
+            <p id="player-suspect-clue" class="text-[#5C3018]">态度异常冷静克制，互证是否为精心串通的闭环？</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Center: Interactive Detective Whiteboard (探案线索墙) (Flex-1) -->
+    <main id="player-panel-center" class="hidden md:flex flex-1 flex-col bg-[#F4EFE6] border-r border-[#D8CCBC] overflow-hidden min-w-0 min-h-0 h-full relative">
+      
+      <!-- Board Header Bar -->
+      <div class="flex flex-wrap items-center justify-between px-3 py-1.5 border-b border-[#D8CCBC] bg-[#EFE8DC] shrink-0 gap-1.5">
+        <div class="flex items-center space-x-1.5 text-xs font-bold text-[#2C221E]">
+          <i data-lucide="pin" class="w-3.5 h-3.5 text-[#8C2D19]"></i>
+          <span class="font-cinzel text-[11px] md:text-xs">DETECTIVE CLUE BOARD · 人物关系线索墙</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1 text-[10px]">
+          <button onclick="resetPlayerFocus()" id="btn-pboard-reset" class="px-2 py-1 rounded bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/40 font-bold hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition flex items-center space-x-0.5">
+            <span>👁️ 全图</span>
+          </button>
+          <button onclick="setPlayerBoardView('alibi')" id="btn-pboard-alibi" class="px-2 py-1 rounded bg-[#B45309] text-[#FAF7F2] font-bold shadow-2xs transition">
+            🔗 表面互证环
+          </button>
+          <button onclick="setPlayerBoardView('truth')" id="btn-pboard-truth" class="px-2 py-1 rounded bg-[#EAE3D6] text-[#2C221E] font-medium hover:bg-[#DFD7C9] border border-[#D8CCBC] transition">
+            🌟 隐藏复仇网
+          </button>
+          <span class="hidden lg:inline border-l border-[#D8CCBC] pl-2 text-[#786B62]">点击节点聚焦关联 · 点击空白重置</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3 py-1.5 bg-[#F4EFE6] border-b border-[#D8CCBC] shrink-0 text-[9px] md:text-[10px] text-[#786B62]">
+        <span class="flex items-center space-x-1"><span class="inline-block w-2.5 h-2.5 rounded" style="background:#8C2D19;"></span><span>被害人</span></span>
+        <span class="flex items-center space-x-1"><span class="inline-block w-2.5 h-2.5 rounded" style="background:#1E293B;"></span><span>侦探</span></span>
+        <span class="flex items-center space-x-1"><span class="inline-block w-2.5 h-2.5 rounded" style="background:#FFFFFF; border:1px solid #8C2D19;"></span><span>嫌疑人</span></span>
+        <span class="flex items-center space-x-1"><span class="inline-block w-2.5 h-2.5" style="background:#1C1917; border:1px solid #D97706; transform:rotate(45deg);"></span><span class="text-[#1C1917] font-bold">阿姆斯特朗案</span></span>
+        <span class="flex items-center space-x-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#7F1D1D;"></span><span class="text-[#7F1D1D] font-bold">离奇刺创物证</span></span>
+        <span class="ml-1 flex items-center space-x-1"><span style="border-bottom: 2px solid #DC2626; width:14px; display:inline-block;"></span><span class="text-[#DC2626]">真相线</span></span>
+        <span class="flex items-center space-x-1"><span style="border-bottom: 2px dashed #B45309; width:14px; display:inline-block;"></span><span>表面互证</span></span>
+      </div>
+
+      <!-- Network Canvas Wrapper -->
+      <div class="network-wrap">
+        <div id="player-network-container"></div>
+      </div>
+    </main>
+
+    <!-- Right: Deduction Scratchpad & AI Assistant (Width: 380px on desktop, full width on mobile) -->
+    <section id="player-panel-right" class="hidden md:flex w-full md:w-96 bg-[#FAF7F2] flex-col shrink-0 overflow-y-auto p-4 space-y-4 min-h-0">
+      
+      <!-- Deduction Form -->
+      <div class="paper-card rounded-xl p-4 shadow-xs space-y-3 border border-[#D8CCBC]">
+        <div class="flex items-center justify-between border-b border-[#E5DCD0] pb-2">
+          <div class="flex items-center space-x-1.5">
+            <div class="w-6 h-6 rounded bg-[#8C2D19] text-[#FAF7F2] flex items-center justify-center font-bold text-xs">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </div>
+            <h2 class="text-xs font-bold text-[#2C221E] font-cinzel">DEDUCTION SCRATCHPAD</h2>
+          </div>
+        </div>
+
+        <div class="space-y-1 text-xs">
+          <label class="block font-bold text-[#8C2D19]">1. 死者雷切特的真实身份与恩怨推测？</label>
+          <textarea id="input-deduce-identity" rows="2" placeholder="写下推测（如：过去的罪行、仇家...）" class="w-full bg-[#FAF7F2] border border-[#D8CCBC] focus:border-[#8C2D19] rounded-lg p-2 text-[#2C221E] text-xs focus:outline-none leading-relaxed resize-none"></textarea>
+        </div>
+
+        <div class="space-y-1 text-xs">
+          <label class="block font-bold text-[#8C2D19]">2. 乘客两两互证的不在场证明有何破绽？</label>
+          <textarea id="input-deduce-alibi" rows="2" placeholder="写下疑点（如：是否过于完美、人为闭环...）" class="w-full bg-[#FAF7F2] border border-[#D8CCBC] focus:border-[#8C2D19] rounded-lg p-2 text-[#2C221E] text-xs focus:outline-none leading-relaxed resize-none"></textarea>
+        </div>
+
+        <div class="space-y-1 text-xs">
+          <label class="block font-bold text-[#8C2D19]">3. 真凶人数与死者身上刀伤的终极结论？</label>
+          <textarea id="input-deduce-killer" rows="2" placeholder="写下结论（如：行凶人数、各处刀伤成因与手法...）" class="w-full bg-[#FAF7F2] border border-[#D8CCBC] focus:border-[#8C2D19] rounded-lg p-2 text-[#2C221E] text-xs focus:outline-none leading-relaxed resize-none"></textarea>
+        </div>
+
+        <button onclick="submitPlayerDeduction()" class="w-full py-2 rounded-lg bg-[#8C2D19] hover:bg-[#722312] text-[#FAF7F2] font-bold text-xs shadow-xs transition flex items-center justify-center space-x-1.5">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 fill-current"></i>
+          <span>提交推断 · 呼叫 AI 探长复盘</span>
+        </button>
+      </div>
+
+      <!-- AI Detective Reveal Card -->
+      <div id="player-ai-reveal-card" class="paper-card border-2 border-[#8C2D19]/40 rounded-xl p-4 shadow-sm space-y-3">
+        <div class="flex items-center space-x-2 border-b border-[#E5DCD0] pb-2">
+          <div class="w-6 h-6 rounded bg-[#8C2D19] text-[#FAF7F2] flex items-center justify-center font-bold text-xs">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-[#2C221E]">AI 探长 (StarGraph) 真相复盘</h3>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-xs leading-relaxed text-[#2C221E]">
+          <div class="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#D8CCBC]">
+            <h4 class="font-bold text-[#8C2D19] mb-1 text-xs flex items-center space-x-1">
+              <i data-lucide="award" class="w-3.5 h-3.5"></i>
+              <span>推论点评:</span>
+            </h4>
+            <p id="player-feedback-text" class="text-[#4A3E38] text-[11px] leading-relaxed">请在上方填写你的推论并点击提交，AI 探长将为你逐一复盘线索与拓扑突破口！</p>
+          </div>
+
+          <div id="player-reveal-comparison" class="hidden p-2.5 rounded-lg bg-[#FFFFFF] border border-[#D8CCBC] text-[11px] space-y-1.5">
+            <div class="p-2 rounded bg-[#FFF5F5] text-[#9B2C2C]">
+              <strong>❌ 普通向量检索:</strong> 孤立匹配局部片段，误判全员互不相识。
+            </div>
+            <div class="p-2 rounded bg-[#F0FDF4] text-[#166534]">
+              <strong>✅ StarGraph 穿透:</strong> 多跳串联阿姆斯特朗案，揭露 12 人民间复仇陪审团。
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- VIEW 2: DEVELOPER / ARCHITECTURE CONSOLE (开发者技术控制台视角)               -->
+  <!-- ========================================================================= -->
+  <div id="view-dev" class="hidden flex-1 flex overflow-hidden">
+    
+    <!-- Left Sidebar: Coach Plan & Chunks (Width: 320px) -->
+    <aside class="w-80 bg-[#FAF7F2] border-r border-[#D8CCBC] flex flex-col shrink-0 overflow-hidden">
+      
+      <!-- Coach Map -->
+      <div class="p-3 border-b border-[#D8CCBC] bg-[#F4EFE6]">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-bold text-[#8C2D19]">加莱车厢拓扑映射</span>
+          <span class="text-[10px] text-[#786B62]">点击高亮图谱</span>
+        </div>
+        <div class="bg-[#FFFFFF] p-2 rounded border border-[#D8CCBC] text-[10px]">
+          <div class="grid grid-cols-6 gap-1 text-center">
+            <div onclick="selectCabin(16)" id="cabin-16" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#16</div>
+            <div onclick="selectCabin(15)" id="cabin-15" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#15</div>
+            <div onclick="selectCabin(14)" id="cabin-14" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#14</div>
+            <div onclick="selectCabin(13)" id="cabin-13" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#13</div>
+            <div onclick="selectCabin(12)" id="cabin-12" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#12</div>
+            <div onclick="selectCabin(3)" id="cabin-3" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#3</div>
+          </div>
+          <div class="grid grid-cols-6 gap-1 text-center mt-1">
+            <div onclick="selectCabin(2)" id="cabin-2" class="cursor-pointer p-1 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold">#2</div>
+            <div onclick="selectCabin(1)" id="cabin-1" class="cursor-pointer p-1 rounded bg-[#2C3E50] text-[#FAF7F2] font-bold">#1</div>
+            <div onclick="selectCabin(10)" id="cabin-10" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#10</div>
+            <div onclick="selectCabin(8)" id="cabin-8" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#8</div>
+            <div onclick="selectCabin(6)" id="cabin-6" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#6</div>
+            <div onclick="selectCabin(4)" id="cabin-4" class="cursor-pointer p-1 rounded bg-[#F4EFE6] border border-[#D5C9B8]">#4</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corpus Chunks -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="p-2.5 bg-[#F4EFE6] border-b border-[#D8CCBC] text-xs font-bold text-[#2C221E] flex items-center justify-between">
+          <span>原著三部曲分块 (Corpus)</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#FAF7F2] text-[#786B62]">6 Chunks</span>
+        </div>
+        <div id="chunk-list-container" class="flex-1 overflow-y-auto p-2.5 space-y-2"></div>
+      </div>
+
+      <!-- Detail Card -->
+      <div id="character-detail-drawer" class="p-3 bg-[#F4EFE6] border-t border-[#D8CCBC] text-xs shrink-0 max-h-40 overflow-y-auto">
+        <div class="flex items-center justify-between text-[#8C2D19] font-bold mb-1">
+          <span id="detail-name">点击包厢或节点</span>
+          <span id="detail-cabin-badge" class="px-1.5 py-0.5 text-[10px] rounded bg-[#FFFFFF] border border-[#D8CCBC]">包厢号</span>
+        </div>
+        <div class="space-y-0.5 text-[#2C221E] text-[11px]">
+          <p><span class="text-[#786B62]">表面:</span> <span id="detail-surface-role">-</span></p>
+          <p><span class="text-[#8C2D19] font-bold">真相:</span> <span id="detail-secret-role" class="text-[#8C2D19] font-bold">-</span></p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center & Right: Knowledge Graph Canvas & Arena -->
+    <main class="flex-1 flex flex-col bg-[#F4EFE6] overflow-hidden min-w-0 min-h-0">
+      
+      <!-- Top Control Bar -->
+      <div class="flex items-center space-x-2 px-3 py-1.5 bg-[#EFE8DC] border-b border-[#D8CCBC] shrink-0">
+        <div class="bg-[#FAF7F2] border border-[#D8CCBC] rounded-lg px-1 flex items-center space-x-0.5 text-xs">
+          <span class="text-[#786B62] px-1.5 font-bold font-cinzel text-[10px]">STAGE:</span>
+          <button onclick="setRevealStage(0)" id="dev-stage-btn-0" class="px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">0 现场</button>
+          <button onclick="setRevealStage(1)" id="dev-stage-btn-1" class="px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">1 口供</button>
+          <button onclick="setRevealStage(2)" id="dev-stage-btn-2" class="px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">2 显影</button>
+          <button onclick="setRevealStage(3)" id="dev-stage-btn-3" class="px-2 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold">3 终局</button>
+        </div>
+        <div class="bg-[#FAF7F2] border border-[#D8CCBC] rounded-lg px-1 flex items-center space-x-0.5 text-xs">
+          <button id="btn-mode-surface" onclick="switchViewMode('surface')" class="px-2.5 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]">表面视角</button>
+          <button id="btn-mode-truth" onclick="switchViewMode('truth')" class="px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold">真相图谱</button>
+          <button id="btn-mode-drift" onclick="switchViewMode('drift')" class="px-2.5 py-0.5 rounded text-[#B45309] hover:text-[#92400E]">DRIFT 穿梭</button>
+        </div>
+        <button onclick="resetDevFocus()" class="px-2.5 py-1 rounded bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/40 font-bold hover:bg-[#8C2D19] hover:text-[#FAF7F2] transition text-xs">
+          👁️ 显示全图
+        </button>
+        <!-- DRIFT inline controls (shown when drift active) -->
+        <div id="drift-stepper" class="hidden flex items-center space-x-2 text-xs bg-[#FFF8EE] border border-[#8C2D19]/30 rounded-lg px-2 py-1">
+          <span id="drift-step-badge" class="px-1.5 py-0.5 bg-[#8C2D19]/10 text-[#8C2D19] rounded text-[10px] font-mono">Step 1/4</span>
+          <p id="drift-step-text" class="text-[#4A3E38] text-[11px] max-w-xs"></p>
+          <button onclick="prevDriftStep()" class="px-2 py-0.5 bg-[#EAE3D6] rounded text-[#2C221E]">◀</button>
+          <button onclick="nextDriftStep()" class="px-2 py-0.5 bg-[#8C2D19] rounded text-[#FAF7F2] font-bold">▶</button>
+          <button onclick="autoPlayDrift()" id="btn-drift-auto" class="px-2 py-0.5 bg-[#FAF7F2] border border-[#D8CCBC] rounded text-[#8C2D19]">▶ 自动</button>
+        </div>
+      </div>
+
+      <!-- Network Canvas Wrapper -->
+      <div class="network-wrap">
+        <div id="dev-network-container"></div>
+      </div>
+
+      <!-- Bottom Arena: Side-by-Side RAG Comparison Console -->
+      <section class="h-60 bg-[#FAF7F2] border-t border-[#D8CCBC] flex flex-col shrink-0 z-20">
+        <div class="px-4 py-1.5 bg-[#F4EFE6] border-b border-[#D8CCBC] flex items-center justify-between space-x-3">
+          <div class="flex items-center space-x-2 text-xs">
+            <span class="text-[#786B62] font-bold">典型关卡:</span>
+            <button onclick="loadBenchmarkCase(0)" id="tab-bench-0" class="px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold text-xs truncate max-w-xs">⚡ 关卡 1: 玛丽动机</button>
+            <button onclick="loadBenchmarkCase(1)" id="tab-bench-1" class="px-2.5 py-0.5 rounded bg-[#FAF7F2] text-[#786B62] border border-[#D8CCBC] text-xs truncate max-w-xs">🔄 关卡 2: 闭环伪证</button>
+            <button onclick="loadBenchmarkCase(2)" id="tab-bench-2" class="px-2.5 py-0.5 rounded bg-[#FAF7F2] text-[#786B62] border border-[#D8CCBC] text-xs truncate max-w-xs">🌐 关卡 3: 全员共谋</button>
+          </div>
+          <div class="flex-1 flex items-center space-x-2 max-w-md">
+            <input id="input-custom-query" type="text" class="w-full bg-[#FFFFFF] border border-[#D8CCBC] rounded px-2.5 py-1 text-xs text-[#2C221E] focus:outline-none" value="玛丽·德本汉在案发当晚是否有作案嫌疑？她与死者雷切特有什么深层动机？">
+            <button onclick="runCurrentQuery()" class="px-3 py-1 bg-[#8C2D19] text-[#FAF7F2] font-bold rounded text-xs shrink-0">执行推理</button>
+          </div>
+        </div>
+
+        <div class="flex-1 grid grid-cols-2 divide-x divide-[#D8CCBC] overflow-hidden text-xs">
+          <div class="p-3 flex flex-col overflow-hidden bg-[#FFF8F8]">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="font-bold text-[#9B2C2C]">❌ 传统向量 RAG (Baseline Vector RAG)</h3>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#FED7D7] text-[#9B2C2C]">孤立局部召回</span>
+            </div>
+            <div class="flex-1 overflow-y-auto pr-1 space-y-1">
+              <div class="p-1.5 rounded bg-[#FFFFFF] border border-[#FED7D7] text-[#4A3E38] text-[11px]" id="vector-rag-answer"></div>
+              <div class="p-1 rounded bg-[#FFF5F5] border border-[#FED7D7] text-[#9B2C2C] text-[10px]" id="vector-rag-flaw"></div>
+            </div>
+          </div>
+
+          <div class="p-3 flex flex-col overflow-hidden bg-[#F0FDF4]">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="font-bold text-[#166534]">✅ StarGraph Engine (GraphRAG / DRIFT)</h3>
+              <div class="flex items-center space-x-1.5 text-[10px]">
+                <span id="stargraph-mode-badge" class="px-1.5 py-0.5 rounded bg-[#DCFCE7] text-[#166534] font-mono">Mode: DRIFT</span>
+                <span id="stargraph-token-saving" class="px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#92400E]">Token 节省 88%</span>
+              </div>
+            </div>
+            <div class="flex-1 overflow-y-auto pr-1 space-y-1">
+              <div class="p-1.5 rounded bg-[#FFFFFF] border border-[#BBF7D0] text-[#1F2937] text-[11px] whitespace-pre-line" id="stargraph-rag-answer"></div>
+              <div class="p-1 rounded bg-[#DCFCE7] text-[#166534] text-[10px] font-mono flex items-center space-x-1 overflow-x-auto" id="stargraph-path-trace"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Embedded Static Knowledge Graph Dataset (Guarantees 100% Offline & file:/// Execution) -->
+  <script>
+    const EMBEDDED_GRAPH_DATA = {
+      "project": "StarGraph: Murder on the Orient Express Knowledge Graph Benchmark",
+      "version": "1.1.0",
+      "nodes": [
+        { "id": "entity:CASSETTI", "name": "雷切特 / 卡塞蒂 (Samuel Ratchett / Cassetti)", "type": "VICTIM_CRIMINAL", "category": "victim", "cabin": 2, "reveal_stage": 0, "surface_role": "美国富商 (声称遭恐吓重金求保)", "secret_role": "五年前阿姆斯特朗绑架撕票案首犯，逃脱法律制裁的恶魔", "description": "东方快车谋杀案被害人，身中12刀身亡。曾绑架杀害3岁女童黛西·阿姆斯特朗，致使阿姆斯特朗家破人亡。", "color": "#ef4444" },
+        { "id": "entity:HERCULE_POIROT", "name": "赫丘勒·白罗 (Hercule Poirot)", "type": "DETECTIVE", "category": "investigator", "cabin": 1, "reveal_stage": 0, "surface_role": "比利时名侦探", "secret_role": "本案裁判官，最终选择维护人性的实质正义，向警方隐瞒真相", "description": "加莱车厢唯一的局外人侦探，通过缜密逻辑识破12人共谋闭环并洞悉人性的正义。", "color": "#3b82f6" },
+        { "id": "entity:TWELVE_STAB_WOUNDS_HUB", "name": "12处深浅各异的刺伤", "type": "EVIDENCE_SUPER_HUB", "category": "evidence_hub", "cabin": 2, "reveal_stage": 2, "surface_role": "死者身上的离奇创口", "secret_role": "12人复仇陪审团共同行刑的铁证：有的致命、有的轻浅、左右手并存", "description": "现场最关键的法医物证：创口具有完全不同的力度、方向与手法，证明有多名凶手轮流刺击。", "color": "#dc2626" },
+        { "id": "entity:PHYSICAL_EVIDENCES", "name": "案发现场散落物证", "type": "EVIDENCE_COLLECTION", "category": "evidence_hub", "cabin": 2, "reveal_stage": 0, "surface_role": "散落车厢的混乱线索", "secret_role": "真伪混杂的线索：纸片指向阿姆斯特朗案，手帕属于公主，通条指向阿布思诺", "description": "现场发现的散落线索，初期用于互相混淆视听与误导侦探向外来刺客方向侦查。", "color": "#94a3b8" },
+        { "id": "entity:MRS_HUBBARD", "name": "赫伯德夫人 / 琳达·亚登 (Mrs. Hubbard / Linda Arden)", "type": "SUSPECT_RINGMASTER", "category": "suspect", "cabin": 3, "reveal_stage": 1, "surface_role": "喧闹浮夸的美国老太太", "secret_role": "黛西的外祖母、著名悲剧女演员琳达·亚登（全盘复仇总策划）", "description": "策划12人陪审团复仇案的灵魂人物，假装包厢有男人闯入制造假线索。", "color": "#a855f7" },
+        { "id": "entity:MARY_DEBENHAM", "name": "玛丽·德本汉 (Mary Debenham)", "type": "SUSPECT_INTELLECT", "category": "suspect", "cabin": 11, "reveal_stage": 1, "surface_role": "冷静理智的英国年轻家庭教师", "secret_role": "曾任阿姆斯特朗家秘书兼家庭教师，深爱黛西，复仇策划核心之一", "description": "表面与车上所有人素不相识，实为阿姆斯特朗家核心成员，与阿布思诺上校相恋。", "color": "#8b5cf6" },
+        { "id": "entity:COLONEL_ARBURTHNOT", "name": "阿布思诺上校 (Colonel Arbuthnot)", "type": "SUSPECT_MILITARY", "category": "suspect", "cabin": 15, "reveal_stage": 1, "surface_role": "严肃守纪的英国印度驻军军官", "secret_role": "阿姆斯特朗上校的生死挚友与战友，发誓为战友全家复仇", "description": "案发时与麦奎恩畅谈政治互做伪证，因深爱玛丽·德本汉并誓为挚友讨回公道加入复仇。", "color": "#8b5cf6" },
+        { "id": "entity:PIERRE_MICHEL", "name": "皮埃尔·米歇尔 (Pierre Michel)", "type": "SUSPECT_STAFF", "category": "suspect", "cabin": 0, "reveal_stage": 1, "surface_role": "辛普伦东方快车资深列车乘务员", "secret_role": "阿姆斯特朗家受冤自杀女仆苏珊的亲生父亲", "description": "利用乘务员职务之便为12名刺客开启车厢与掩护走廊动线。", "color": "#8b5cf6" },
+        { "id": "entity:HECTOR_MCQUEEN", "name": "赫克特·麦奎恩 (Hector McQueen)", "type": "SUSPECT_SECRETARY", "category": "suspect", "cabin": 6, "reveal_stage": 1, "surface_role": "雷切特的年轻美国私人秘书", "secret_role": "负责阿姆斯特朗案的地方检察官之子，极度崇拜索尼娅·阿姆斯特朗", "description": "卧底在卡塞蒂身边掌握其行踪与恐吓信，负责下药并为阿布思诺上校提供不在场证明。", "color": "#8b5cf6" },
+        { "id": "entity:EDWARD_MASTERMAN", "name": "爱德华·马斯特曼 (Edward Masterman)", "type": "SUSPECT_VALET", "category": "suspect", "cabin": 4, "reveal_stage": 1, "surface_role": "刻板正统的雷切特英国男仆", "secret_role": "阿姆斯特朗上校一战期间的勤务兵与管家", "description": "在上校死后痛恨卡塞蒂，与福卡雷利同住一室并互为不在场证明。", "color": "#8b5cf6" },
+        { "id": "entity:PRINCESS_DRAGOMIROFF", "name": "娜塔丽亚·卓戈米罗夫公主 (Princess Dragomiroff)", "type": "SUSPECT_NOBLE", "category": "suspect", "cabin": 14, "reveal_stage": 1, "surface_role": "年迈体弱、丑陋威严的俄国流亡贵族", "secret_role": "琳达·亚登的挚友、黛西母亲索尼娅的教母", "description": "地位崇高，现场遗留的绣“H”手帕即属于她（俄文字母N），坚决支持诛杀凶犯。", "color": "#8b5cf6" },
+        { "id": "entity:HILDEGARDE_SCHMIDT", "name": "希德加第·施密特 (Hildegarde Schmidt)", "type": "SUSPECT_MAID", "category": "suspect", "cabin": 8, "reveal_stage": 1, "surface_role": "卓戈米罗夫公主的德国忠厚女仆", "secret_role": "阿姆斯特朗家当年极受喜爱的厨师", "description": "指认假列车员制服扣子，为公主服务并刺下属于厨师的一刀。", "color": "#8b5cf6" },
+        { "id": "entity:ANTONIO_FOSCARELLI", "name": "安东尼奥·福卡雷利 (Antonio Foscarelli)", "type": "SUSPECT_DRIVER", "category": "suspect", "cabin": 5, "reveal_stage": 1, "surface_role": "喋喋不休的意大利汽车推销员", "secret_role": "阿姆斯特朗家当年的司机，视小黛西如己出", "description": "极富义气的南欧司机，与马斯特曼互保不在场证明并参与刺杀。", "color": "#8b5cf6" },
+        { "id": "entity:GRETA_OHLSSON", "name": "葛丽泰·奥尔森 (Greta Ohlsson)", "type": "SUSPECT_NURSE", "category": "suspect", "cabin": 10, "reveal_stage": 1, "surface_role": "胆小虔诚的瑞典传教士", "secret_role": "曾任小黛西·阿姆斯特朗的专职看护保姆", "description": "小黛西遇害给她造成终生心理创伤，与玛丽·德本汉互保不在场证明。", "color": "#8b5cf6" },
+        { "id": "entity:CYRUS_HARDMAN", "name": "赛勒斯·哈德曼 (Cyrus Hardman)", "type": "SUSPECT_DETECTIVE", "category": "suspect", "cabin": 16, "reveal_stage": 1, "surface_role": "受雇于雷切特的美国私家侦探", "secret_role": "受冤跳楼自尽女仆苏珊生前的前男友/情人", "description": "借护卫之名卧底监视卡塞蒂，故意向白罗提供“深肤色假刺客”假口供。", "color": "#8b5cf6" },
+        { "id": "entity:COUNT_ANDRENYI", "name": "安德烈尼伯爵 (Count Andrenyi)", "type": "SUSPECT_DIPLOMAT", "category": "suspect", "cabin": 13, "reveal_stage": 1, "surface_role": "享有外交豁免权的匈牙利贵族外交官", "secret_role": "为保护深爱的妻子（黛西姨妈），代替妻子刺下属于她的一刀", "description": "用油迹涂改妻子护照上的真名海伦娜（Helena -> Elena），坚决替妻复仇。", "color": "#8b5cf6" },
+        { "id": "entity:COUNTESS_ANDRENYI", "name": "海伦娜·安德烈尼伯爵夫人 (Countess Andrenyi)", "type": "SUSPECT_INNOCENT", "category": "suspect", "cabin": 12, "reveal_stage": 1, "surface_role": "年轻貌美的匈牙利伯爵夫人", "secret_role": "索尼娅·阿姆斯特朗的亲妹妹、黛西的亲姨妈（海伦娜·哥登堡）", "description": "全车12人中唯一没有亲手刺下刀痕的人（由其丈夫伯爵代刺以避免其双手染血）。", "color": "#8b5cf6" },
+        { "id": "entity:ARMSTRONG_TRAGEDY_HUB", "name": "【超级核心】阿姆斯特朗绑架惨案 (Armstrong Tragedy)", "type": "TRAGIC_SUPER_HUB", "category": "tragedy_hub", "cabin": null, "reveal_stage": 2, "surface_role": "5年前震惊全美的世纪惨案", "secret_role": "东方快车上全员复仇动机的唯一向心力核心源泉", "description": "卡塞蒂策划绑架杀害3岁黛西，摧毁了整个阿姆斯特朗家族，并在5年后引发东方快车正义裁决。", "color": "#eab308" },
+        { "id": "entity:DAISY_ARMSTRONG", "name": "黛西·阿姆斯特朗 (Daisy Armstrong)", "type": "TRAGIC_VICTIM", "category": "tragedy_hub", "cabin": null, "reveal_stage": 2, "surface_role": "已故遇害女童", "secret_role": "12人复仇行动守护的灵魂象征", "description": "阿姆斯特朗上校与索尼娅的3岁独生女，5年前遭卡塞蒂绑架撕票。", "color": "#f59e0b" },
+        { "id": "entity:SUSAN_NURSEMAID", "name": "苏珊 (Suzanne / Paulette)", "type": "TRAGIC_VICTIM", "category": "tragedy_hub", "cabin": null, "reveal_stage": 2, "surface_role": "已故无辜法国女仆", "secret_role": "米歇尔之女、哈德曼恋人，含冤跳楼引燃二人复仇决心", "description": "绑架案后被警方严酷审讯，不堪冤屈跳楼自尽。", "color": "#f59e0b" }
+      ],
+      "edges": [
+        { "source": "entity:CASSETTI", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "FATALLY_WOUNDED_BY", "label": "身中12处离奇刺伤 (法医复盘)", "weight": 1.0, "reveal_stage": 2, "truth_only": true },
+        { "source": "entity:CASSETTI", "target": "entity:PHYSICAL_EVIDENCES", "relation": "ASSOCIATED_EVIDENCES", "label": "现场散落遗留物", "weight": 0.8, "reveal_stage": 0, "truth_only": false },
+        { "source": "entity:MARY_DEBENHAM", "target": "entity:GRETA_OHLSSON", "relation": "ALIBI_MUTUAL", "label": "同室互证睡觉 (假不在场证明)", "weight": 0.5, "reveal_stage": 1, "truth_only": false },
+        { "source": "entity:COLONEL_ARBURTHNOT", "target": "entity:HECTOR_MCQUEEN", "relation": "ALIBI_MUTUAL", "label": "吸烟室夜谈 (互为不在场证明)", "weight": 0.5, "reveal_stage": 1, "truth_only": false },
+        { "source": "entity:EDWARD_MASTERMAN", "target": "entity:ANTONIO_FOSCARELLI", "relation": "ALIBI_MUTUAL", "label": "同住4/5号包厢互为证人", "weight": 0.5, "reveal_stage": 1, "truth_only": false },
+        { "source": "entity:HILDEGARDE_SCHMIDT", "target": "entity:PRINCESS_DRAGOMIROFF", "relation": "ALIBI_MUTUAL", "label": "主仆侍奉互证", "weight": 0.6, "reveal_stage": 1, "truth_only": false },
+        { "source": "entity:COUNT_ANDRENYI", "target": "entity:COUNTESS_ANDRENYI", "relation": "ALIBI_MUTUAL", "label": "夫妻全程在旁互证", "weight": 0.6, "reveal_stage": 1, "truth_only": false },
+        { "source": "entity:CYRUS_HARDMAN", "target": "entity:PIERRE_MICHEL", "relation": "ALIBI_MUTUAL", "label": "走廊巡视口供互相印证", "weight": 0.5, "reveal_stage": 1, "truth_only": false },
+        { "source": "entity:CASSETTI", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "MASTERMIND_OF_CRIME", "label": "绑架撕票罪魁祸首", "weight": 1.0, "reveal_stage": 2, "truth_only": true },
+        { "source": "entity:ARMSTRONG_TRAGEDY_HUB", "target": "entity:DAISY_ARMSTRONG", "relation": "INCLUDES_VICTIM", "label": "受害女童 (3岁撕票)", "weight": 1.0, "reveal_stage": 2, "truth_only": true },
+        { "source": "entity:ARMSTRONG_TRAGEDY_HUB", "target": "entity:SUSAN_NURSEMAID", "relation": "INCLUDES_VICTIM", "label": "受冤跳楼女仆", "weight": 1.0, "reveal_stage": 2, "truth_only": true },
+        { "source": "entity:MRS_HUBBARD", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "GRANDMOTHER_AND_ORGANIZER", "label": "黛西外祖母 / 复仇总指挥", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:MARY_DEBENHAM", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "GOVERNESS_AND_CORE", "label": "家庭教师兼秘书 / 核心策划", "weight": 0.95, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:COLONEL_ARBURTHNOT", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "COMRADE_AND_HONOR_GUARD", "label": "上校生死战友 / 荣誉誓约", "weight": 0.95, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:PIERRE_MICHEL", "target": "entity:SUSAN_NURSEMAID", "relation": "FATHER_OF_VICTIM", "label": "苏珊亲生父亲", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:CYRUS_HARDMAN", "target": "entity:SUSAN_NURSEMAID", "relation": "LOVER_OF_VICTIM", "label": "苏珊生前恋人", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:EDWARD_MASTERMAN", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "ORDERLY_AND_VALET", "label": "一战勤务兵与忠诚男仆", "weight": 0.9, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:ANTONIO_FOSCARELLI", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "DEVOTED_CHAUFFEUR", "label": "家族专职司机", "weight": 0.9, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:GRETA_OHLSSON", "target": "entity:DAISY_ARMSTRONG", "relation": "LOVING_NURSE", "label": "专职看护保姆", "weight": 0.95, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:PRINCESS_DRAGOMIROFF", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "GODMOTHER_AND_NOBLE_BACKER", "label": "索尼娅教母 / 贵族后盾", "weight": 0.95, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:HILDEGARDE_SCHMIDT", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "FAMILY_COOK", "label": "当年大厨", "weight": 0.9, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:COUNTESS_ANDRENYI", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "SISTER_AND_AUNT", "label": "索尼娅亲妹妹 / 黛西姨妈", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:COUNT_ANDRENYI", "target": "entity:COUNTESS_ANDRENYI", "relation": "PROTECTOR_HUSBAND", "label": "深爱妻子 / 替妻行刑", "weight": 0.95, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:HECTOR_MCQUEEN", "target": "entity:ARMSTRONG_TRAGEDY_HUB", "relation": "PROSECUTOR_SON_DEVOTEE", "label": "办案检察官之子", "weight": 0.9, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:MRS_HUBBARD", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第1刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:MARY_DEBENHAM", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第2刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:COLONEL_ARBURTHNOT", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第3刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:PIERRE_MICHEL", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第4刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:HECTOR_MCQUEEN", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第5刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:EDWARD_MASTERMAN", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第6刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:PRINCESS_DRAGOMIROFF", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第7刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:HILDEGARDE_SCHMIDT", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第8刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:ANTONIO_FOSCARELLI", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第9刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:GRETA_OHLSSON", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第10刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:CYRUS_HARDMAN", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第11刀", "weight": 1.0, "reveal_stage": 3, "truth_only": true },
+        { "source": "entity:COUNT_ANDRENYI", "target": "entity:TWELVE_STAB_WOUNDS_HUB", "relation": "AVENGED_STAB", "label": "刺下第12刀(代妻)", "weight": 1.0, "reveal_stage": 3, "truth_only": true }
+      ],
+      "benchmarks": [
+        {
+          "id": "case_1_multihop_debenham_motive",
+          "title": "关卡 1: 挖掘隐藏的多跳关系与作案动机",
+          "query": "玛丽·德本汉在案发当晚是否有作案嫌疑？她与死者雷切特有什么深层动机？",
+          "vector_rag": {
+            "answer": "根据审讯记录，玛丽·德本汉是一名普通的英国年轻家庭教师，与死者及其他乘客素不相识。当晚她与瑞典传教士同住一室，有完整的不在场证明，未发现任何作案嫌疑与动机。",
+            "flaw_analysis": "【致命失效】向量语义检索只能命中表面审讯片段，无法跨文档将表面身份与阿姆斯特朗惨案穿透，被表面口供完全欺骗。"
+          },
+          "stargraph_rag": {
+            "mode": "drift",
+            "traversed_path": [
+              "玛丽·德本汉 (entity:MARY_DEBENHAM)",
+              "--> [GOVERNESS_AND_CORE] --> 阿姆斯特朗惨案超节点",
+              "--> [INCLUDES_VICTIM] --> 黛西·阿姆斯特朗",
+              "<-- [MASTERMIND_OF_CRIME] <-- 卡塞蒂 / 雷切特",
+              "--> [AVENGED_STAB] --> 12处刺伤超节点 (刺下第2刀)"
+            ],
+            "answer": "【StarGraph 动态穿梭推理】玛丽·德本汉具有重大作案嫌疑：\n1. 她曾是阿姆斯特朗家深受信任的秘书兼家庭教师；\n2. 死者雷切特正是绑架杀害女童黛西的主谋卡塞蒂；\n3. 玛丽与室友的不在场证明系串通伪证，她在当晚亲手刺下第2刀。",
+            "metrics": { "token_cost_ratio": "0.12x (比全量遍历节省 88% Token)" }
+          }
+        },
+        {
+          "id": "case_2_closed_loop_alibi_detection",
+          "title": "关卡 2: 穿透互相担保的闭环谎言网络",
+          "query": "加莱车厢各位乘客的不在场证明是否可靠？是否存在矛盾或人为串通？",
+          "vector_rag": {
+            "answer": "加莱车厢乘客的不在场证明非常可靠且相互支持。所有人均证明彼此案发时在睡觉或谈话，具备坚固的合法不在场证明。",
+            "flaw_analysis": "【致命失效】向量检索孤立提取局部证词，无法识别所有乘客两两结对、相互担保形成的'全图无死角闭环'本质上是人为构造的伪证掩护网。"
+          },
+          "stargraph_rag": {
+            "mode": "local",
+            "traversed_path": [
+              "ALIBI_LOOP: 德本汉 <-> 奥尔森",
+              "ALIBI_LOOP: 麦奎恩 <-> 阿布思诺",
+              "ALIBI_LOOP: 马斯特曼 <-> 福卡雷利",
+              "ALIBI_LOOP: 施密特 <-> 卓戈米罗夫公主",
+              "ALIBI_LOOP: 安德烈尼伯爵 <-> 伯爵夫人",
+              "ALIBI_LOOP: 哈德曼 <-> 米歇尔"
+            ],
+            "answer": "【StarGraph 拓扑冲突检测】乘客的不在场证明全部是伪造的封闭串供环：\n1. 图拓扑分析显示全车乘客精确划分为 6 对'互证闭环'，呈现极度反常的人为设计特征；\n2. 所谓的不在场证明是 12 人为了掩护轮流进入 2 号包厢行刑而集体编织的拓扑烟幕弹。",
+            "metrics": { "token_cost_ratio": "拓扑闭环识别率 100%" }
+          }
+        },
+        {
+          "id": "case_3_global_conspiracy_summary",
+          "title": "关卡 3: 宏观全景与十二人复仇共谋推演",
+          "query": "东方快车上的12名嫌疑人之间是否存在某种整体性的隐秘模式？真正的凶手是谁？",
+          "vector_rag": {
+            "answer": "根据第一种解释，真凶可能是一个在温科夫齐上车的神秘外来刺客。车上乘客来自不同国家，阶层各异，未发现统一组织关系。",
+            "flaw_analysis": "【致命失效】面对宏观归纳问题，向量检索被波洛提出的第一种烟幕弹假说带偏，无法利用社区报告归纳出全员共谋。"
+          },
+          "stargraph_rag": {
+            "mode": "global",
+            "traversed_path": [
+              "Community Level 2: [东方快车十二人复仇陪审团]",
+              "-> Map: 12名成员全部围绕【阿姆斯特朗惨案超节点】存在亲属/仆从关系",
+              "-> Reduce: 12人分别向【12处刺伤超节点】各刺入1刀"
+            ],
+            "answer": "【StarGraph 社区 Map-Reduce 归纳】全车 12 名嫌疑人存在整体性的复仇共谋：\n1. 【共同动机】：所有 12 名乘客全部与五年前被卡塞蒂残害的阿姆斯特朗家存在血缘或主仆纽带；\n2. 【真凶真相】：没有外来刺客，12 名乘客共同组成了民间复仇陪审团，各自刺下一刀实现私力正义审判。",
+            "metrics": { "token_cost_ratio": "全景覆盖率 100%" }
+          }
+        }
+      ]
+    };
+
+    let GRAPH_DATA = EMBEDDED_GRAPH_DATA;
+    let devNetwork = null;
+    let playerNetwork = null;
+    let currentMainRole = 'player';
+    let currentRevealStage = 3;
+    let currentViewMode = 'truth';
+    let currentBenchmarkIndex = 0;
+    let driftStepIndex = 0;
+    let driftTimer = null;
+    let focusedPlayerNodeId = null;
+    let focusedDevNodeId = null;
+    let currentPlayerBoardMode = 'alibi';
+    let currentStorySlide = 0;
+    const TOTAL_STORY_SLIDES = 5;
+    let currentMobileTab = 'left';
+
+    function openStoryIntro() {
+      currentStorySlide = 0;
+      updateStorySlideView();
+      const modal = document.getElementById('story-intro-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function skipStoryIntro() {
+      const modal = document.getElementById('story-intro-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function changeStorySlide(delta) {
+      currentStorySlide += delta;
+      if (currentStorySlide < 0) currentStorySlide = 0;
+      if (currentStorySlide >= TOTAL_STORY_SLIDES) {
+        skipStoryIntro();
+        return;
+      }
+      updateStorySlideView();
+    }
+
+    function updateStorySlideView() {
+      for (let i = 0; i < TOTAL_STORY_SLIDES; i++) {
+        const slide = document.getElementById(`story-slide-${i}`);
+        if (slide) {
+          if (i === currentStorySlide) slide.classList.remove('hidden');
+          else slide.classList.add('hidden');
+        }
+      }
+
+      document.getElementById('story-step-indicator').innerText = `Card ${currentStorySlide + 1} / ${TOTAL_STORY_SLIDES}`;
+      document.getElementById('btn-story-prev').disabled = (currentStorySlide === 0);
+
+      const nextBtn = document.getElementById('btn-story-next');
+      if (currentStorySlide === TOTAL_STORY_SLIDES - 1) {
+        nextBtn.innerHTML = '<span>开始探案 (进入线索墙) 🚀</span>';
+      } else {
+        nextBtn.innerHTML = '<span>下一页 ▶</span>';
+      }
+
+      const dotsContainer = document.getElementById('story-dots');
+      if (dotsContainer) {
+        dotsContainer.innerHTML = Array.from({ length: TOTAL_STORY_SLIDES }).map((_, i) => `
+          <span class="w-2.5 h-2.5 rounded-full ${i === currentStorySlide ? 'bg-[#8C2D19] scale-110' : 'bg-[#D8CCBC]'} inline-block transition-all"></span>
+        `).join('');
+      }
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function switchPlayerMobileTab(tab) {
+      currentMobileTab = tab;
+      const pLeft = document.getElementById('player-panel-left');
+      const pCenter = document.getElementById('player-panel-center');
+      const pRight = document.getElementById('player-panel-right');
+
+      const bLeft = document.getElementById('btn-pmob-left');
+      const bCenter = document.getElementById('btn-pmob-center');
+      const bRight = document.getElementById('btn-pmob-right');
+
+      // Hide all on mobile
+      pLeft.classList.add('hidden');
+      pCenter.classList.add('hidden');
+      pRight.classList.add('hidden');
+
+      // Reset button styles
+      [bLeft, bCenter, bRight].forEach(b => {
+        if (b) {
+          b.className = "flex-1 py-1.5 rounded-lg text-[#786B62] text-center flex items-center justify-center space-x-1";
+        }
+      });
+
+      if (tab === 'left') {
+        pLeft.classList.remove('hidden');
+        pLeft.classList.add('flex');
+        bLeft.className = "flex-1 py-1.5 rounded-lg bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/30 shadow-2xs text-center flex items-center justify-center space-x-1";
+      } else if (tab === 'center') {
+        pCenter.classList.remove('hidden');
+        pCenter.classList.add('flex');
+        bCenter.className = "flex-1 py-1.5 rounded-lg bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/30 shadow-2xs text-center flex items-center justify-center space-x-1";
+        setTimeout(() => {
+          const container = document.getElementById('player-network-container');
+          if (playerNetwork && container) {
+            const r = container.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+              playerNetwork.setSize(r.width + 'px', r.height + 'px');
+              playerNetwork.redraw();
+              playerNetwork.fit({ animation: false });
+            }
+          }
+        }, 50);
+      } else if (tab === 'right') {
+        pRight.classList.remove('hidden');
+        pRight.classList.add('flex');
+        bRight.className = "flex-1 py-1.5 rounded-lg bg-[#FAF7F2] text-[#8C2D19] border border-[#8C2D19]/30 shadow-2xs text-center flex items-center justify-center space-x-1";
+      }
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    const SUSPECT_PROFILES = {
+      2: { name: "山谬·雷切特 (Samuel Ratchett)", role: "被害人", statement: "在反锁包厢内身中多处深浅各异的刀伤。生前声称收到恐吓信并试图重金雇佣白罗。", clue: "死者身上的多处刀伤为何既有左撇子也有右撇子？" },
+      1: { name: "赫丘勒·白罗 (Hercule Poirot)", role: "名侦探", statement: "本案主审侦探，昨夜听到雷切特房间传来异响与法文'搞错了'。", clue: "列车因暴风雪受阻，凶手不可能逃离列车！" },
+      11: { name: "玛丽·德本汉 (Mary Debenham)", role: "英国家庭教师", statement: "自称是从巴格达返英的普通家庭教师。案发当晚一直在双人房间里睡觉，与室友葛丽泰·奥尔森互相证实整夜未出房间。", clue: "为什么她态度异常冷静克制？她与车上其他乘客是否有未公开的关联？" },
+      15: { name: "阿布思诺上校 (Colonel Arbuthnot)", role: "英国驻印军官", statement: "坚称整晚与秘书麦奎恩在吸烟室交谈直到深夜，互为不在场证明，声称完全不认识雷切特。", clue: "他与玛丽·德本汉在登车前是否有过秘密私谈？" },
+      3: { name: "赫伯德夫人 (Mrs. Hubbard)", role: "美国老太太", statement: "声称昨夜有陌生男人潜入其车厢，并在床上留下一颗列车员制服扣子。", clue: "她是真被吓坏了，还是故意在演一出大戏制造假线索？" },
+      14: { name: "娜塔丽亚·卓戈米罗夫公主", role: "俄国贵族", statement: "年迈体弱，声称整夜由女仆施密特陪伴读书，对死者一无所知。", clue: "现场绣有'H'的手帕，在俄文字母中是否可能对应其他姓名？" },
+      13: { name: "安德烈尼伯爵 (Count Andrenyi)", role: "匈牙利外交官", statement: "坚称夫人海伦娜服药后整夜熟睡，自己全程在旁证明，出示外交护照。", clue: "为什么伯爵夫人护照上的名字有一处可疑的油迹涂改？" },
+      12: { name: "海伦娜·伯爵夫人 (Countess Andrenyi)", role: "贵族夫人", statement: "全程由丈夫代为作证，神色惊恐。", clue: "她神色如此惊惶，是否在掩饰自己过去的真实出身？" },
+      6: { name: "赫克特·麦奎恩 (Hector McQueen)", role: "死者私人秘书", statement: "称雷切特近期收到恐吓信，案发时正与阿布思诺上校在吸烟室聊天。", clue: "他深知雷切特的过去与仇家，为何愿意为这样一个恶名昭彰的人工作？" },
+      4: { name: "爱德华·马斯特曼 (Edward Masterman)", role: "死者男仆", statement: "称睡前给主人服下安眠药后便回到包厢与福卡雷利同住，互证整夜未出。", clue: "他态度冷峻拘谨，对主人的猝死为何没有流露出丝毫震惊？" },
+      5: { name: "安东尼奥·福卡雷利 (Antonio Foscarelli)", role: "意大利汽车推销员", statement: "坚称整夜与男仆马斯特曼同住，未曾离开包厢半分。", clue: "他性格热情外向，谈吐间对美国家庭结构为何如此熟稔？" },
+      10: { name: "葛丽泰·奥尔森 (Greta Ohlsson)", role: "瑞典传教士", statement: "称案发前去3号包厢借阿司匹林，回房后与玛丽·德本汉互证睡觉。", clue: "她提起幼童话题时为何神色异常感伤？" },
+      8: { name: "希德加第·施密特 (Hildegarde Schmidt)", role: "德国女仆", statement: "服侍公主入睡后回房，称曾在走廊撞见小个子列车员。", clue: "她言辞谨慎，对走廊动静的陈述是否经过事先对表？" },
+      16: { name: "赛勒斯·哈德曼 (Cyrus Hardman)", role: "美国私家侦探", statement: "自称受雇于雷切特防范暗杀，坚称凶手是深肤色小个子男人。", clue: "他所描绘的'深肤色刺客'，列车上其他人为何都未曾目击？" },
+      0: { name: "皮埃尔·米歇尔 (Pierre Michel)", role: "资深列车员", statement: "整夜在走廊巡视值守，只看到过一个神秘红和服女子背影。", clue: "在列车员眼皮底下作案，他究竟是玩忽职守还是有所隐瞒？" }
+    };
+
+    function init() {
+      renderNarrativeChunks();
+      loadBenchmarkCase(0);
+      updateStorySlideView();
+
+      // Defer Vis.js init until the browser has completed layout
+      // and the containers have real pixel dimensions.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          initPlayerVisNetwork();
+          // Register ResizeObserver to redraw when container resizes
+          const playerContainer = document.getElementById('player-network-container');
+          if (playerContainer && typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(() => {
+              if (playerNetwork) {
+                playerNetwork.redraw();
+                playerNetwork.fit({ animation: false });
+              }
+            });
+            ro.observe(playerContainer);
+          }
+        });
+      });
+
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function switchMainRole(role) {
+      currentMainRole = role;
+      const btnPlayer = document.getElementById('btn-role-player');
+      const btnDev = document.getElementById('btn-role-dev');
+      const viewPlayer = document.getElementById('view-player');
+      const viewDev = document.getElementById('view-dev');
+
+      if (role === 'player') {
+        btnPlayer.className = "px-4 py-1.5 rounded-lg flex items-center space-x-2 transition-all bg-[#8C2D19] text-[#FAF7F2] font-bold shadow-xs";
+        btnDev.className = "px-4 py-1.5 rounded-lg flex items-center space-x-2 transition-all text-[#786B62] hover:text-[#2C221E]";
+        viewPlayer.classList.remove('hidden');
+        viewDev.classList.add('hidden');
+        if (playerNetwork) {
+          requestAnimationFrame(() => {
+            playerNetwork.redraw();
+            playerNetwork.fit({ animation: true });
+          });
+        }
+      } else {
+        btnPlayer.className = "px-4 py-1.5 rounded-lg flex items-center space-x-2 transition-all text-[#786B62] hover:text-[#2C221E]";
+        btnDev.className = "px-4 py-1.5 rounded-lg flex items-center space-x-2 transition-all bg-[#8C2D19] text-[#FAF7F2] font-bold shadow-xs";
+        viewPlayer.classList.add('hidden');
+        viewDev.classList.remove('hidden');
+        
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (!devNetwork) {
+              initDevVisNetwork();
+              const devContainer = document.getElementById('dev-network-container');
+              if (devContainer && typeof ResizeObserver !== 'undefined') {
+                const ro = new ResizeObserver(() => {
+                  if (devNetwork) { devNetwork.redraw(); devNetwork.fit({ animation: false }); }
+                });
+                ro.observe(devContainer);
+              }
+            } else {
+              devNetwork.redraw();
+              devNetwork.fit({ animation: true });
+            }
+          });
+        });
+      }
+    }
+
+    function createVisData() {
+      const nodesData = GRAPH_DATA.nodes.map(n => {
+        const isSuperHub = n.id === 'entity:ARMSTRONG_TRAGEDY_HUB';
+        const isStabHub = n.id === 'entity:TWELVE_STAB_WOUNDS_HUB';
+        
+        let shape = 'box';
+        let size = 18;
+        let bg = '#FFFFFF';
+        let border = '#8C2D19';
+        let fontColor = '#2C221E';
+
+        if (isSuperHub) {
+          shape = 'diamond';
+          size = 36;
+          bg = '#1C1917'; // 墨黑背景 (超强视觉重心)
+          border = '#D97706'; // 金琥珀金边
+          fontColor = '#FFFFFF'; // 纯白高对比字体
+        } else if (isStabHub) {
+          shape = 'box';
+          size = 24;
+          bg = '#7F1D1D'; // 深血暗红 (文字居中显示于容器内)
+          border = '#B91C1C';
+          fontColor = '#FFFFFF';
+        } else if (n.id === 'entity:PHYSICAL_EVIDENCES') {
+          shape = 'box';
+          size = 20;
+          bg = '#374151'; // 深炭黑灰
+          border = '#1F2937';
+          fontColor = '#FFFFFF';
+        } else if (n.category === 'victim') {
+          shape = 'box';
+          size = 24;
+          bg = '#8C2D19';
+          border = '#450A0A';
+          fontColor = '#FFFFFF';
+        } else if (n.category === 'investigator') {
+          shape = 'box';
+          size = 22;
+          bg = '#1E293B';
+          border = '#0F172A';
+          fontColor = '#FFFFFF';
+        }
+
+        return {
+          id: n.id,
+          label: n.name.split(' (')[0],
+          title: `${n.name}\n表面: ${n.surface_role}\n真相: ${n.secret_role}`,
+          color: {
+            background: bg,
+            border: border,
+            highlight: { background: '#FEF3C7', border: '#8C2D19' }
+          },
+          font: { color: fontColor, size: isSuperHub ? 13 : 11, face: 'Noto Serif SC' },
+          shape: shape,
+          size: size,
+          margin: 6,
+          borderWidth: isSuperHub ? 3 : 2,
+          shadow: { enabled: true, color: 'rgba(44,34,30,0.15)', size: 6 }
+        };
+      });
+
+      const edgesData = GRAPH_DATA.edges.map((e, idx) => ({
+        id: `edge_${idx}_${e.source}_${e.target}`,
+        from: e.source,
+        to: e.target,
+        label: e.label,
+        font: { size: 10, color: e.truth_only ? '#DC2626' : '#B45309', align: 'middle', background: 'rgba(250,247,242,0.9)' },
+        color: { color: e.truth_only ? '#DC2626' : '#B45309' },
+        dashes: !e.truth_only,
+        width: e.truth_only ? 2.5 : 1.5,
+        arrows: { to: { enabled: true, scaleFactor: 0.7 } },
+        smooth: { type: 'continuous' }
+      }));
+
+      return {
+        nodes: new vis.DataSet(nodesData),
+        edges: new vis.DataSet(edgesData)
+      };
+    }
+
+    function getNodeConnectedIds(nodeId) {
+      const connectedNodeIds = new Set([nodeId]);
+      const connectedEdgeIds = new Set();
+      GRAPH_DATA.edges.forEach((e, idx) => {
+        if (e.source === nodeId || e.target === nodeId) {
+          connectedNodeIds.add(e.source);
+          connectedNodeIds.add(e.target);
+          connectedEdgeIds.add(`edge_${idx}_${e.source}_${e.target}`);
+        }
+      });
+      return { connectedNodeIds, connectedEdgeIds };
+    }
+
+    function initPlayerVisNetwork() {
+      const container = document.getElementById('player-network-container');
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        requestAnimationFrame(() => requestAnimationFrame(initPlayerVisNetwork));
+        return;
+      }
+
+      const data = createVisData();
+      const options = {
+        width: rect.width + 'px',
+        height: rect.height + 'px',
+        nodes: {},
+        edges: {},
+        physics: {
+          enabled: true,
+          solver: 'forceAtlas2Based',
+          forceAtlas2Based: { gravitationalConstant: -55, centralGravity: 0.012, springLength: 110, springConstant: 0.07 },
+          stabilization: { iterations: 80, updateInterval: 25 }
+        },
+        interaction: { hover: true, tooltipDelay: 150, zoomView: true, dragView: true }
+      };
+
+      if (typeof vis === 'undefined') { console.error('Vis.js not loaded'); return; }
+
+      playerNetwork = new vis.Network(container, data, options);
+      playerNetwork.on('click', function(params) {
+        if (params.nodes.length > 0) {
+          const selectedNodeId = params.nodes[0];
+          focusPlayerNode(selectedNodeId);
+          const node = GRAPH_DATA.nodes.find(n => n.id === selectedNodeId);
+          if (node && node.cabin !== null) playerSelectCabin(node.cabin, false);
+        } else {
+          // Clicked empty canvas -> reset view
+          resetPlayerFocus();
+        }
+      });
+
+      // Apply initial exploration mode (hides deep tragedy hub upfront!)
+      setPlayerBoardView('alibi');
+
+      window.addEventListener('resize', () => {
+        if (!playerNetwork) return;
+        const r = container.getBoundingClientRect();
+        playerNetwork.setSize(r.width + 'px', r.height + 'px');
+        playerNetwork.redraw();
+      });
+    }
+
+    function focusPlayerNode(nodeId) {
+      if (!playerNetwork) return;
+      focusedPlayerNodeId = nodeId;
+      const { connectedNodeIds, connectedEdgeIds } = getNodeConnectedIds(nodeId);
+      const nodesDataSet = playerNetwork.body.data.nodes;
+      const edgesDataSet = playerNetwork.body.data.edges;
+
+      GRAPH_DATA.nodes.forEach(n => {
+        const isSelected = n.id === nodeId;
+        const isNeighbor = connectedNodeIds.has(n.id);
+        const isSuper = n.id === 'entity:ARMSTRONG_TRAGEDY_HUB' || n.id === 'entity:TWELVE_STAB_WOUNDS_HUB';
+        
+        let baseSize = isSuper ? 32 : (n.category === 'victim' ? 24 : 18);
+        let baseFontSize = isSuper ? 13 : 11;
+
+        // In alibi mode, never reveal the secret tragedy super hub upfront
+        const stageAllowed = currentPlayerBoardMode === 'truth' ? true : n.reveal_stage <= 1;
+
+        if (isNeighbor && stageAllowed) {
+          nodesDataSet.update({
+            id: n.id,
+            hidden: false,
+            size: isSelected ? baseSize * 1.5 : baseSize * 1.15,
+            font: { size: isSelected ? baseFontSize + 4 : baseFontSize + 1, face: 'Noto Serif SC', bold: isSelected },
+            borderWidth: isSelected ? 4 : 2
+          });
+        } else {
+          nodesDataSet.update({
+            id: n.id,
+            hidden: true
+          });
+        }
+      });
+
+      GRAPH_DATA.edges.forEach((e, idx) => {
+        const edgeId = `edge_${idx}_${e.source}_${e.target}`;
+        const isConnected = connectedEdgeIds.has(edgeId);
+        let shouldHide = !isConnected;
+        if (currentPlayerBoardMode === 'alibi' && (e.truth_only || e.reveal_stage > 1)) shouldHide = true;
+
+        edgesDataSet.update({
+          id: edgeId,
+          hidden: shouldHide,
+          width: isConnected ? (e.truth_only ? 3.5 : 2.5) : 1
+        });
+      });
+
+      playerNetwork.focus(nodeId, { scale: 1.35, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+      playerNetwork.redraw();
+    }
+
+    function resetPlayerFocus() {
+      if (!playerNetwork) return;
+      focusedPlayerNodeId = null;
+      const nodesDataSet = playerNetwork.body.data.nodes;
+      const edgesDataSet = playerNetwork.body.data.edges;
+
+      GRAPH_DATA.nodes.forEach(n => {
+        const isSuper = n.id === 'entity:ARMSTRONG_TRAGEDY_HUB' || n.id === 'entity:TWELVE_STAB_WOUNDS_HUB';
+        // In alibi (exploration) mode, hide deep secret nodes (reveal_stage > 1) to protect mystery!
+        const shouldHide = currentPlayerBoardMode === 'alibi' && n.reveal_stage > 1;
+
+        nodesDataSet.update({
+          id: n.id,
+          hidden: shouldHide,
+          size: isSuper ? 32 : (n.category === 'victim' ? 24 : 18),
+          font: { size: isSuper ? 13 : 11, face: 'Noto Serif SC', bold: false },
+          borderWidth: isSuper ? 3 : 2
+        });
+      });
+
+      GRAPH_DATA.edges.forEach((e, idx) => {
+        const shouldHide = currentPlayerBoardMode === 'alibi' ? (e.truth_only || e.reveal_stage > 1) : false;
+        edgesDataSet.update({
+          id: `edge_${idx}_${e.source}_${e.target}`,
+          hidden: shouldHide,
+          width: e.truth_only ? 2.5 : 1.5
+        });
+      });
+
+      playerNetwork.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+      playerNetwork.redraw();
+    }
+
+    function initDevVisNetwork() {
+      const container = document.getElementById('dev-network-container');
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        requestAnimationFrame(() => requestAnimationFrame(initDevVisNetwork));
+        return;
+      }
+
+      const data = createVisData();
+      const options = {
+        width: rect.width + 'px',
+        height: rect.height + 'px',
+        nodes: {},
+        edges: {},
+        physics: {
+          enabled: true,
+          solver: 'forceAtlas2Based',
+          forceAtlas2Based: { gravitationalConstant: -65, centralGravity: 0.015, springLength: 130, springConstant: 0.08 },
+          stabilization: { iterations: 80, updateInterval: 25 }
+        },
+        interaction: { hover: true, tooltipDelay: 150, zoomView: true, dragView: true }
+      };
+
+      if (typeof vis === 'undefined') return;
+
+      devNetwork = new vis.Network(container, data, options);
+      devNetwork.on('click', function(params) {
+        if (params.nodes.length > 0) {
+          const selectedNodeId = params.nodes[0];
+          focusDevNode(selectedNodeId);
+          showNodeDetails(selectedNodeId);
+        } else {
+          resetDevFocus();
+        }
+      });
+      refreshDevGraphVisibility();
+
+      window.addEventListener('resize', () => {
+        if (!devNetwork) return;
+        const r = container.getBoundingClientRect();
+        devNetwork.setSize(r.width + 'px', r.height + 'px');
+        devNetwork.redraw();
+      });
+    }
+
+    function focusDevNode(nodeId) {
+      if (!devNetwork) return;
+      focusedDevNodeId = nodeId;
+      const { connectedNodeIds, connectedEdgeIds } = getNodeConnectedIds(nodeId);
+      const nodesDataSet = devNetwork.body.data.nodes;
+      const edgesDataSet = devNetwork.body.data.edges;
+
+      GRAPH_DATA.nodes.forEach(n => {
+        const isSelected = n.id === nodeId;
+        const isNeighbor = connectedNodeIds.has(n.id);
+        const stageAllowed = n.reveal_stage <= currentRevealStage;
+        const isSuper = n.id === 'entity:ARMSTRONG_TRAGEDY_HUB' || n.id === 'entity:TWELVE_STAB_WOUNDS_HUB';
+        
+        let baseSize = isSuper ? 34 : (n.category === 'victim' ? 22 : 18);
+        let baseFontSize = isSuper ? 13 : 11;
+
+        if (isNeighbor && stageAllowed) {
+          nodesDataSet.update({
+            id: n.id,
+            hidden: false,
+            size: isSelected ? baseSize * 1.5 : baseSize * 1.15,
+            font: { size: isSelected ? baseFontSize + 4 : baseFontSize + 1, face: 'Noto Serif SC', bold: isSelected },
+            borderWidth: isSelected ? 4 : 2
+          });
+        } else {
+          nodesDataSet.update({
+            id: n.id,
+            hidden: true
+          });
+        }
+      });
+
+      GRAPH_DATA.edges.forEach((e, idx) => {
+        const edgeId = `edge_${idx}_${e.source}_${e.target}`;
+        const isConnected = connectedEdgeIds.has(edgeId);
+        const stageAllowed = e.reveal_stage <= currentRevealStage;
+        let shouldHide = !isConnected || !stageAllowed;
+        if (currentViewMode === 'surface' && e.truth_only) shouldHide = true;
+
+        edgesDataSet.update({
+          id: edgeId,
+          hidden: shouldHide,
+          width: isConnected ? (e.truth_only ? 3.5 : 2.5) : 1
+        });
+      });
+
+      devNetwork.focus(nodeId, { scale: 1.35, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+      devNetwork.redraw();
+    }
+
+    function resetDevFocus() {
+      if (!devNetwork) return;
+      focusedDevNodeId = null;
+      refreshDevGraphVisibility();
+      devNetwork.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+    }
+
+    function setPlayerBoardView(mode) {
+      currentPlayerBoardMode = mode;
+      const btnAlibi = document.getElementById('btn-pboard-alibi');
+      const btnTruth = document.getElementById('btn-pboard-truth');
+
+      if (mode === 'alibi') {
+        btnAlibi.className = "px-2.5 py-1 rounded bg-[#B45309] text-[#FAF7F2] font-bold shadow-2xs transition";
+        btnTruth.className = "px-2.5 py-1 rounded bg-[#EAE3D6] text-[#2C221E] font-medium hover:bg-[#DFD7C9] transition";
+      } else {
+        btnAlibi.className = "px-2.5 py-1 rounded bg-[#EAE3D6] text-[#2C221E] font-medium hover:bg-[#DFD7C9] transition";
+        btnTruth.className = "px-2.5 py-1 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold shadow-2xs transition";
+      }
+
+      if (focusedPlayerNodeId) {
+        focusPlayerNode(focusedPlayerNodeId);
+      } else {
+        resetPlayerFocus();
+      }
+    }
+
+    function playerSelectCabin(cabinNum, focusGraph = true) {
+      document.querySelectorAll('[id^="p-cabin-"]').forEach(el => el.classList.remove('ring-2', 'ring-[#8C2D19]'));
+      const el = document.getElementById(`p-cabin-${cabinNum}`);
+      if (el) el.classList.add('ring-2', 'ring-[#8C2D19]');
+
+      const info = SUSPECT_PROFILES[cabinNum];
+      if (info) {
+        document.getElementById('player-suspect-name').innerText = info.name;
+        document.getElementById('player-suspect-cabin').innerText = `包厢 #${cabinNum} · ${info.role}`;
+        document.getElementById('player-suspect-statement').innerText = info.statement;
+        document.getElementById('player-suspect-clue').innerText = info.clue;
+      }
+
+      const node = GRAPH_DATA.nodes.find(n => n.cabin === cabinNum);
+      if (node && focusGraph) {
+        focusPlayerNode(node.id);
+      }
+    }
+
+    function submitPlayerDeduction() {
+      const text1 = (document.getElementById('input-deduce-identity')?.value || '').toLowerCase();
+      const text2 = (document.getElementById('input-deduce-alibi')?.value || '').toLowerCase();
+      const text3 = (document.getElementById('input-deduce-killer')?.value || '').toLowerCase();
+
+      let score = 0;
+      let matchedInsights = [];
+
+      const k1 = ['卡塞蒂', 'cassetti', '绑架', '阿姆斯特朗', 'armstrong', '撕票', '女童', '黛西', 'daisy', '恶魔', '仇家', '罪犯'];
+      const k2 = ['串供', '闭环', '假', '伪造', '伪证', '互相', '完美', '谎言', '串通', '循环', '两两', '巧合', '掩护', '漏洞'];
+      const k3 = ['12', '十二', '全员', '全部', '共谋', '所有人', '集体', '陪审团', '轮流', '各刺', '复仇', '一人一刀', '共同'];
+
+      if (k1.some(w => text1.includes(w))) {
+        score += 33;
+        matchedInsights.push('识别出死者背后关联的阿姆斯特朗重大惨案');
+      }
+      if (k2.some(w => text2.includes(w))) {
+        score += 33;
+        matchedInsights.push('洞察到乘客两两互相担保是不在场证明闭环伪证');
+      }
+      if (k3.some(w => text3.includes(w))) {
+        score += 34;
+        matchedInsights.push('推断出全车 12 名乘客共同组成民间复仇法庭并集体行刑');
+      }
+
+      const feedback = document.getElementById('player-feedback-text');
+      if (score >= 90) {
+        feedback.innerHTML = `<span class="text-[#8C2D19] font-bold text-xs">🌟 综合评分：100 分 (神探级推断)</span><br>太震撼了！你的破案直觉直逼赫丘勒·白罗！你精准洞穿了阿加莎·克里斯蒂设下的所有迷雾，线索墙已为你点亮全案 12 根复仇红线！`;
+      } else if (score >= 30) {
+        feedback.innerHTML = `<span class="text-[#8C2D19] font-bold text-xs">🔍 综合评分：${score} 分 (洞察部分核心破绽)</span><br>你成功发现了：<strong class="text-[#166534]">${matchedInsights.join('，')}</strong>。<br>线索墙已为你揭晓其余隐藏同盟！`;
+      } else {
+        feedback.innerHTML = `<span class="text-[#8C2D19] font-bold text-xs">💡 综合评分：已提交记录</span><br>面对 12 人天衣无缝的假口供，极易陷入误区。线索墙已为你点亮 GraphRAG 穿透后的真凶网络！`;
+      }
+
+      const compBox = document.getElementById('player-reveal-comparison');
+      if (compBox) compBox.classList.remove('hidden');
+
+      setPlayerBoardView('truth');
+      if (playerNetwork) {
+        playerNetwork.focus('entity:ARMSTRONG_TRAGEDY_HUB', { scale: 1.1, animation: true });
+      }
+    }
+
+    function renderNarrativeChunks() {
+      const container = document.getElementById('chunk-list-container');
+      const chunkPreviews = [
+        { id: "chunk_1", part: "第一部", stage: 0, title: "暴风雪受阻与雷切特遇害", desc: "雷切特身中12刀，遗留带H手帕、烟斗通条与烧焦纸片" },
+        { id: "chunk_2", part: "第二部", stage: 1, title: "列车员与仆从组口供及互证", desc: "米歇尔、马斯特曼、施密特、麦奎恩互相提供不在场证明" },
+        { id: "chunk_3", part: "第二部", stage: 1, title: "贵族与外国旅客口供", desc: "安德烈尼伯爵夫妇、卓戈米罗夫公主、福卡雷利、奥尔森" },
+        { id: "chunk_4", part: "第二部", stage: 1, title: "英美乘客口供与假线索", desc: "赫伯德夫人、玛丽·德本汉、阿布思诺上校、哈德曼" },
+        { id: "chunk_5", part: "第三部", stage: 2, title: "烧焦纸片显影与阿姆斯特朗案", desc: "显影出Daisy Armstrong，揭露雷切特即绑匪恶魔卡塞蒂" },
+        { id: "chunk_6", part: "第三部", stage: 3, title: "十二人复仇陪审团真相", desc: "波洛拆穿所有人隐藏身份，揭露12人各刺一刀的正义审判" }
+      ];
+
+      container.innerHTML = chunkPreviews.map((c, i) => `
+        <div onclick="selectChunk(${i}, ${c.stage})" id="chunk-card-${i}" class="p-2 rounded bg-[#FFFFFF] border border-[#D8CCBC] hover:border-[#8C2D19]/60 hover:bg-[#FFF8EE] transition cursor-pointer text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <span class="text-[9px] px-1 py-0.2 rounded bg-[#8C2D19]/10 text-[#8C2D19] font-mono font-bold">${c.part}</span>
+            <span class="text-[9px] text-[#786B62] font-mono">Stage ${c.stage}</span>
+          </div>
+          <div class="font-bold text-[#2C221E] text-[11px] mb-0.5">${c.title}</div>
+          <div class="text-[#786B62] text-[10px] leading-tight line-clamp-1">${c.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    function selectChunk(index, stage) {
+      document.querySelectorAll('[id^="chunk-card-"]').forEach((el, i) => {
+        if (i === index) el.classList.add('border-[#8C2D19]', 'bg-[#FFF8EE]');
+        else el.classList.remove('border-[#8C2D19]', 'bg-[#FFF8EE]');
+      });
+      setRevealStage(stage);
+    }
+
+    function setRevealStage(stage) {
+      currentRevealStage = stage;
+      [0, 1, 2, 3].forEach(s => {
+        const btn = document.getElementById(`dev-stage-btn-${s}`);
+        if (btn) {
+          if (s === stage) btn.className = "px-2 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold";
+          else btn.className = "px-2 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]";
+        }
+      });
+      refreshDevGraphVisibility();
+    }
+
+    function refreshDevGraphVisibility() {
+      if (!GRAPH_DATA || !devNetwork) return;
+      if (focusedDevNodeId) {
+        focusDevNode(focusedDevNodeId);
+        return;
+      }
+      const nodesDataSet = devNetwork.body.data.nodes;
+      const edgesDataSet = devNetwork.body.data.edges;
+
+      GRAPH_DATA.nodes.forEach(n => {
+        const isSuper = n.id === 'entity:ARMSTRONG_TRAGEDY_HUB' || n.id === 'entity:TWELVE_STAB_WOUNDS_HUB';
+        nodesDataSet.update({
+          id: n.id,
+          hidden: n.reveal_stage > currentRevealStage,
+          size: isSuper ? 34 : (n.category === 'victim' ? 22 : 18),
+          font: { size: isSuper ? 13 : 11, face: 'Noto Serif SC', bold: false },
+          borderWidth: isSuper ? 3 : 2
+        });
+      });
+
+      GRAPH_DATA.edges.forEach((e, idx) => {
+        let isVisible = e.reveal_stage <= currentRevealStage;
+        if (currentViewMode === 'surface' && e.truth_only) isVisible = false;
+        edgesDataSet.update({
+          id: `edge_${idx}_${e.source}_${e.target}`,
+          hidden: !isVisible,
+          color: { color: e.truth_only ? '#DC2626' : '#B45309' },
+          width: e.truth_only ? 2.5 : 1.5
+        });
+      });
+
+      devNetwork.redraw();
+    }
+
+    function showNodeDetails(nodeId) {
+      const node = GRAPH_DATA.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+
+      document.getElementById('detail-name').innerText = node.name;
+      document.getElementById('detail-cabin-badge').innerText = node.cabin !== null ? `包厢 #${node.cabin}` : '核心物证';
+      document.getElementById('detail-surface-role').innerText = node.surface_role;
+      document.getElementById('detail-secret-role').innerText = node.secret_role;
+
+      if (node.cabin !== null) selectCabin(node.cabin, false);
+    }
+
+    function selectCabin(cabinNum, focusGraph = true) {
+      document.querySelectorAll('[id^="cabin-"]').forEach(el => el.classList.remove('ring-2', 'ring-[#8C2D19]'));
+      const cabinEl = document.getElementById(`cabin-${cabinNum}`);
+      if (cabinEl) cabinEl.classList.add('ring-2', 'ring-[#8C2D19]');
+
+      const node = GRAPH_DATA.nodes.find(n => n.cabin === cabinNum);
+      if (node) {
+        showNodeDetails(node.id);
+        if (focusGraph && devNetwork) {
+          focusDevNode(node.id);
+        }
+      }
+    }
+
+    function switchViewMode(mode) {
+      currentViewMode = mode;
+      document.getElementById('btn-mode-surface').className = mode === 'surface' 
+        ? "px-2.5 py-0.5 rounded bg-[#B45309] text-[#FAF7F2] font-bold"
+        : "px-2.5 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]";
+
+      document.getElementById('btn-mode-truth').className = mode === 'truth'
+        ? "px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold"
+        : "px-2.5 py-0.5 rounded text-[#786B62] hover:text-[#2C221E]";
+
+      document.getElementById('btn-mode-drift').className = mode === 'drift'
+        ? "px-2.5 py-0.5 rounded bg-[#2C3E50] text-[#FAF7F2] font-bold"
+        : "px-2.5 py-0.5 rounded text-[#B45309] hover:text-[#92400E]";
+
+      const stepper = document.getElementById('drift-stepper');
+      if (mode === 'drift') {
+        stepper.classList.remove('hidden');
+        setRevealStage(3);
+        initDriftSequence();
+      } else {
+        stepper.classList.add('hidden');
+        if (driftTimer) clearInterval(driftTimer);
+        refreshDevGraphVisibility();
+      }
+    }
+
+    const DRIFT_STEPS = [
+      { nodes: ['entity:MARY_DEBENHAM'], text: "【Step 1 种子定位】从 Query 提取关键词锁定 '玛丽·德本汉'，向量召回其节点。" },
+      { nodes: ['entity:MARY_DEBENHAM', 'entity:ARMSTRONG_TRAGEDY_HUB'], text: "【Step 2 第1跳穿梭】沿着 GOVERNESS_AND_CORE 边探索，命中【阿姆斯特朗惨案超级节点】！" },
+      { nodes: ['entity:MARY_DEBENHAM', 'entity:ARMSTRONG_TRAGEDY_HUB', 'entity:DAISY_ARMSTRONG'], text: "【Step 3 第2跳关联受害者】锁定悲剧源头 3 岁遇害女童黛西，建立深层情感复仇动机。" },
+      { nodes: ['entity:MARY_DEBENHAM', 'entity:ARMSTRONG_TRAGEDY_HUB', 'entity:CASSETTI', 'entity:TWELVE_STAB_WOUNDS_HUB'], text: "【Step 4 第3跳命中行刑】发现死者即绑匪首犯卡塞蒂，玛丽刺下【12处深浅刺伤】中的第2刀，闭环推理完成！" }
+    ];
+
+    function initDriftSequence() {
+      driftStepIndex = 0;
+      updateDriftStepView();
+    }
+
+    function nextDriftStep() {
+      if (driftStepIndex < DRIFT_STEPS.length - 1) {
+        driftStepIndex++;
+        updateDriftStepView();
+      }
+    }
+
+    function prevDriftStep() {
+      if (driftStepIndex > 0) {
+        driftStepIndex--;
+        updateDriftStepView();
+      }
+    }
+
+    function updateDriftStepView() {
+      const step = DRIFT_STEPS[driftStepIndex];
+      document.getElementById('drift-step-badge').innerText = `Step ${driftStepIndex + 1}/${DRIFT_STEPS.length}`;
+      document.getElementById('drift-step-text').innerText = step.text;
+      if (devNetwork) {
+        devNetwork.selectNodes(step.nodes);
+        if (step.nodes.length > 0) devNetwork.focus(step.nodes[0], { scale: 1.1, animation: true });
+      }
+    }
+
+    function autoPlayDrift() {
+      const btn = document.getElementById('btn-drift-auto');
+      if (driftTimer) {
+        clearInterval(driftTimer);
+        driftTimer = null;
+        btn.innerText = '▶ 自动播放';
+        return;
+      }
+      btn.innerText = '⏸ 暂停播放';
+      driftTimer = setInterval(() => {
+        driftStepIndex = (driftStepIndex + 1) % DRIFT_STEPS.length;
+        updateDriftStepView();
+      }, 2500);
+    }
+
+    function loadBenchmarkCase(index) {
+      currentBenchmarkIndex = index;
+      [0, 1, 2].forEach(i => {
+        const tab = document.getElementById(`tab-bench-${i}`);
+        if (tab) {
+          if (i === index) tab.className = "px-2.5 py-0.5 rounded bg-[#8C2D19] text-[#FAF7F2] font-bold text-xs truncate max-w-xs";
+          else tab.className = "px-2.5 py-0.5 rounded bg-[#FAF7F2] text-[#786B62] border border-[#D8CCBC] text-xs truncate max-w-xs";
+        }
+      });
+
+      const b = GRAPH_DATA.benchmarks[index];
+      document.getElementById('input-custom-query').value = b.query;
+
+      document.getElementById('vector-rag-answer').innerText = b.vector_rag.answer;
+      document.getElementById('vector-rag-flaw').innerText = b.vector_rag.flaw_analysis;
+
+      document.getElementById('stargraph-rag-answer').innerText = b.stargraph_rag.answer;
+      document.getElementById('stargraph-mode-badge').innerText = `Mode: ${b.stargraph_rag.mode.toUpperCase()}`;
+      document.getElementById('stargraph-token-saving').innerText = b.stargraph_rag.metrics.token_cost_ratio || b.stargraph_rag.metrics.global_coverage;
+      
+      const pathTraceEl = document.getElementById('stargraph-path-trace');
+      pathTraceEl.innerHTML = (b.stargraph_rag.traversed_path || []).map(p => `
+        <span class="px-1.5 py-0.5 rounded bg-[#FAF7F2] text-[#8C2D19] border border-[#D8CCBC] shrink-0 font-bold">${p}</span>
+      `).join(' ➜ ');
+    }
+
+    function runCurrentQuery() {
+      loadBenchmarkCase(currentBenchmarkIndex);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

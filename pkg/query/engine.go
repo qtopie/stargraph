@@ -11,13 +11,19 @@ import (
 type Engine struct {
 	localSearcher  *LocalSearcher
 	globalSearcher *GlobalSearcher
+	driftSearcher  *DRIFTSearcher
 }
 
 // NewEngine 创建统一查询引擎
-func NewEngine(localSearcher *LocalSearcher, globalSearcher *GlobalSearcher) *Engine {
+func NewEngine(localSearcher *LocalSearcher, globalSearcher *GlobalSearcher, driftSearcher ...*DRIFTSearcher) *Engine {
+	var ds *DRIFTSearcher
+	if len(driftSearcher) > 0 {
+		ds = driftSearcher[0]
+	}
 	return &Engine{
 		localSearcher:  localSearcher,
 		globalSearcher: globalSearcher,
+		driftSearcher:  ds,
 	}
 }
 
@@ -32,6 +38,11 @@ func (e *Engine) Query(ctx context.Context, req *search.Request) (*search.Result
 		return e.localSearcher.Search(ctx, req)
 	case search.ModeGlobal:
 		return e.globalSearcher.Search(ctx, req)
+	case search.ModeDRIFT:
+		if e.driftSearcher != nil {
+			return e.driftSearcher.Search(ctx, req)
+		}
+		return e.localSearcher.Search(ctx, req)
 	default:
 		// 默认兜底使用 Local Search
 		return e.localSearcher.Search(ctx, req)
@@ -48,6 +59,15 @@ func (e *Engine) routeIntent(query string) search.Mode {
 			return search.ModeGlobal
 		}
 	}
+
+	// 链路追踪/硬件排障类关键词优先走 DRIFT Search
+	driftKeywords := []string{"drift", "path", "debug", "diagnose", "trace", "cause", "排查", "死锁", "时序", "路径", "根因", "故障"}
+	for _, kw := range driftKeywords {
+		if strings.Contains(q, kw) && e.driftSearcher != nil {
+			return search.ModeDRIFT
+		}
+	}
+
 	// 默认走精确拓扑推理 Local Search
 	return search.ModeLocal
 }

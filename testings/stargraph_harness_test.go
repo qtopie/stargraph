@@ -92,4 +92,52 @@ func TestHarness_FullPipeline(t *testing.T) {
 	if resGlobal.Answer == "" {
 		t.Errorf("Expected populated global search result, got empty")
 	}
+
+	// Test DRIFT Search
+	resDRIFT, err := engine.Query(ctx, &search.Request{
+		Query:   "Trace connections between Domour and CosmosStar",
+		Mode:    search.ModeDRIFT,
+		MaxHops: 2,
+	})
+	if err != nil {
+		t.Fatalf("DRIFT query failed: %v", err)
+	}
+	if resDRIFT.Answer == "" || len(resDRIFT.Nodes) == 0 {
+		t.Errorf("Expected populated DRIFT search result")
+	}
+}
+
+func TestHarness_LazyAndDRIFTPipeline(t *testing.T) {
+	ctx := context.Background()
+	cfg := stargraph.DefaultConfig()
+	cfg.IndexMode = stargraph.IndexModeLazy
+	cfg.ExtractorType = stargraph.ExtractorTypeCooccurrence
+	cfg.CooccurrenceConfig.MinCooccurFreq = 1
+
+	engine := stargraph.NewEngine(&harnessMockLLM{}, &harnessMockEmbed{}, cfg)
+	defer func() { _ = engine.Close() }()
+
+	doc := &document.Document{
+		ID: "chip-doc-harness",
+		Content: "The ESP32_CHIP controls the I2C_BUS_LINE to communicate with SENSOR_TMP102. " +
+			"When I2C_BUS_LINE hangs, ESP32_CHIP resets the SENSOR_TMP102 power rail.",
+	}
+
+	if err := engine.Insert(ctx, doc); err != nil {
+		t.Fatalf("Engine Lazy AGRAG Insert failed: %v", err)
+	}
+
+	resDRIFT, err := engine.Query(ctx, &search.Request{
+		Query: "Trace root cause of I2C_BUS_LINE failure with ESP32_CHIP",
+		Mode:  search.ModeDRIFT,
+	})
+	if err != nil {
+		t.Fatalf("DRIFT query failed: %v", err)
+	}
+	if resDRIFT.Answer == "" {
+		t.Errorf("Expected non-empty DRIFT answer")
+	}
+	if len(resDRIFT.Nodes) == 0 {
+		t.Errorf("Expected traversed nodes in harness test")
+	}
 }
